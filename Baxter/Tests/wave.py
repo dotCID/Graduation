@@ -1,7 +1,15 @@
+## Wave the right arm. From http://sdk.rethinkrobotics.com/wiki/Hello_Baxter ##
+## Adapted by @author Marien Wolthuis ##
+
 import rospy
 import baxter_interface
 
+
+
 rospy.init_node("wave")
+_rs = baxter_interface.RobotEnable(baxter_interface.CHECK_VERSION)
+_init_state = _rs.state().enabled
+
 limb = baxter_interface.Limb('right')
 angles = limb.joint_angles()
 
