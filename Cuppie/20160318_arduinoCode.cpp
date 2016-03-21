@@ -11,7 +11,7 @@
 
 Servo sBH, sBV, sTH, sTV;
 double BH_pos,BV_pos,TH_pos, TV_pos;
-bool fullPrint = true;
+bool fullPrint = false;
 bool fullStop = false;
 
 #define BH_MIN 0

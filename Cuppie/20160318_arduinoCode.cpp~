@@ -16,19 +16,19 @@ bool fullStop = false;
 
 #define BH_MIN 0
 #define BH_MAX 180
-#define BH_DEF 90
+#define BH_DEF 94
 
-#define BV_MIN 0
+#define BV_MIN 90
 #define BV_MAX 180
-#define BV_DEF 90
+#define BV_DEF 155
 
 #define TH_MIN 0
 #define TH_MAX 180
-#define TH_DEF 90
+#define TH_DEF 98
 
-#define TV_MIN 0
+#define TV_MIN 40
 #define TV_MAX 180
-#define TV_DEF 90
+#define TV_DEF 145
 
 String inputString ="";
 bool stringComplete = false;
@@ -134,10 +134,10 @@ void readSerial(){
 */
 void runMotors(){
     if(!fullStop){
-        if((BH_pos > BH_MIN) && (BH_pos < BH_MAX))  sBH.write(BH_pos);
-        if((BV_pos > BV_MIN) && (BV_pos < BV_MAX))  sBV.write(BV_pos);
-        if((TH_pos > TH_MIN) && (TH_pos < TH_MAX))  sTH.write(TH_pos);
-        if((TV_pos > TV_MIN) && (TV_pos < TV_MAX))  sTV.write(TV_pos);
+        if((BH_pos >= BH_MIN) && (BH_pos <= BH_MAX))  sBH.write(BH_pos);
+        if((BV_pos >= BV_MIN) && (BV_pos <= BV_MAX))  sBV.write(BV_pos);
+        if((TH_pos >= TH_MIN) && (TH_pos <= TH_MAX))  sTH.write(TH_pos);
+        if((TV_pos >= TV_MIN) && (TV_pos <= TV_MAX))  sTV.write(TV_pos);
     }else{
         //Serial.print(F("All motion is currently stopped. Please send \"start\" to start moving."));
     }
