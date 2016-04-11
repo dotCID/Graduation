@@ -3,7 +3,7 @@ import serial, time, math, SimpleCV
 
 # Follow a marker with distance based accelleration
 
-printing = False
+printing = True
 print_response = False
 
 dt = 0.0001
@@ -117,6 +117,7 @@ def determineSpeed(pos, goal, i):
         if vCurr[i] > vmin:
             if vCurr[i]-a < vmin:
                 vCurr[i] = vmin
+                print "minimum speed"
             else:
                 vCurr[i]-=a
                     
@@ -153,6 +154,9 @@ def move(pos, end_pose):
         
         for i in range(len(pos)):
             if abs(pos[i] - end_pose[i]) > vmin * 5:
+                #there are some odd issues with the braking triggers not resetting properly
+                if abs(pos[i] - end_pose[i]) > vmin *10:
+                    braking[i] = False
                 
                 v = determineSpeed(pos, end_pose, i)
                 
@@ -166,10 +170,6 @@ def move(pos, end_pose):
             
             arduinoWrite(pos[i], i)
         if printing: print "."
-       # time.sleep(dt)
-    
-    #below is needed in some cases, maybe TODO: investigate?
-    braking = [False, False, False, False]
 
 def search():
     img = cam.getImage()
@@ -231,7 +231,7 @@ lastLoop = 0
 while display.isNotDone():    
     #print 1000 / (millis() - lastLoop)
     #lastLoop = millis()
-    print (millis()-startTime)/1000
+    #print (millis()-startTime)/1000
     
     target = search()
 #    target = search_ball()
@@ -241,7 +241,10 @@ while display.isNotDone():
         tar_x = target[0]-width/2 
         tar_y = target[1]-height/2
         findTime = millis()
+        print "Hit!"
     elif millis() - findTime > t_thresh and not searching:
+        
+        braking = [False, False, False, False]
         move(pos, pos_search)
         if done(pos, pos_search):
             searching = True
@@ -252,10 +255,12 @@ while display.isNotDone():
             move(pos, pos_search_left)
             if done(pos, pos_search_left):
                 searchDir = -1
+                print "Looking left now."
         else:
             move(pos, pos_search_right)
             if done(pos, pos_search_right):
                 searchDir = 1
+                print "Looking right now."
         continue
                 
     # Having the target within the box is acceptable
