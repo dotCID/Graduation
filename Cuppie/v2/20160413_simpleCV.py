@@ -3,6 +3,7 @@ This script uses SimpleCV to find a blue LED and report its position relative to
 '''
 #!/user/bin/python
 import time, math, SimpleCV
+import zmq
 
 printing = True
 
@@ -19,6 +20,12 @@ yTgt = (height/2-box_d, height/2+box_d)
 xTgt = (width/2-box_d, width/2+box_d)
 
 centre = (height/2, width/2)
+
+
+context = zmq.Context()
+socket = context.socket(zmq.PUB)
+socket.bind("tcp://127.0.0.1:4999")
+
 
 def search():
     img = cam.getImage()
@@ -51,8 +58,7 @@ deg_x = 0
 deg_y = 0
 last_tar = tar_x
 status = "Lost"
-startTime = millis()
-findTime = startTime
+findTime = 0
 lastFound = findTime
 lossReported = False
 
@@ -83,12 +89,13 @@ while display.isNotDone():
     #output the data
     # not needed if there's no new data to report
     if not lossReported:
-        print   str(findTime-startTime) + ": " +\
-                status+ " " + \
-                "("+str(tar_x)+","+str(tar_y)+")" + " " +\
-                "["+str(deg_x)+","+str(deg_y)+"]"
+        message =   str(findTime) + ": " +\
+                    status+ " " + \
+                    "("+str(tar_x)+","+str(tar_y)+")" + " " +\
+                    "["+str(deg_x)+","+str(deg_y)+"]"
+
+        socket.send(message)
+                        
         if lastFound == findTime:
             lossReported = True
-    
-    
-    
+

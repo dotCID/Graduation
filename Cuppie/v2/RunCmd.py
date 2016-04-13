@@ -5,7 +5,7 @@ http://stackoverflow.com/questions/4158502/python-kill-or-terminate-subprocess-w
 Usage: RunCmd(["./someProg", "arg1"], 60).Run()
 '''
 
-import subprocess as sub
+import subprocess
 import threading
 
 class RunCmd(threading.Thread):
@@ -15,7 +15,7 @@ class RunCmd(threading.Thread):
         self.timeout = timeout
 
     def run(self):
-        self.p = sub.Popen(self.cmd)
+        self.p = subprocess.Popen(self.cmd)
         self.p.wait()
 
     def Run(self):
