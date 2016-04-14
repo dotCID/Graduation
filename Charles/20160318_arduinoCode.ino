@@ -59,15 +59,14 @@ void loop(){
     readSerial();
     runMotors();
 
+    if(beat && millis()-beatTime > 10){
+            digitalWrite(13, LOW); 
+            beat = false; 
+    }
     if(beat){ 
-      digitalWrite(13, HIGH); 
-      
-      // TODO: REMOVE
-      delay(5);
-      
-      digitalWrite(13, LOW); 
-      beat = false; 
-    };
+        beatTime = millis();
+        digitalWrite(13, HIGH); 
+    }
    
     
 }

@@ -1,0 +1,35 @@
+{ start point 1 }                                                   { start point 2 }
+        |                                                                   |
+       \|/                                                                  |
+        .                                                                   |
+[ SCVController ]                                                           |
+        |                                                                   |
+       \|/                                                                 \|/
+        .                                                                   .
+[    simpleCV   ]   --->   ( targetData: 127.0.0.1:4001 )  --->  [ movementCalculator ]  ---> [ arduinoInterface ]
+                                                                            .
+                                                                           /|\
+{ start point 3 }                                                           |
+        |                                                                   |
+       \|/                                                                  |
+        .                                                                   |
+[ beatDetector ]    --->   ( beatData:   127.0.0.1:4002 )  ------------------
+
+***********************************************************************************************************************
+
+Data formats
+
+targetData = {
+                't'       : <message generate time>,
+                'findTime': <last time target was spotted>,
+                'found'   : <current target status>,
+                'tar_px'  : <target distance from image centre in px> {'x':tar_x, 'y':tar_y},
+                'tar_dg'  : <angular adjustment from image centre in deg to get target in the box> {'x':deg_x, 'y':deg_y}
+            }
+
+beatData = {
+                't'   : <message generate time>,
+                'f0'  : <fundamental frequency>,
+                's0'  : <average accelleration>,
+                'beat': <whether the message is on a beat>
+            }
