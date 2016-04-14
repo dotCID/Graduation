@@ -2,5 +2,5 @@
 import RunCmd
 
 while True:
-    RunCmd.RunCmd(["python", "./20160413_simpleCV.py"], 3600).Run()
+    RunCmd.RunCmd(["python", "./simpleCV.py"], 3600).Run()
 

@@ -7,31 +7,37 @@ Gets data from a ZMQ topic
 '''
 
 import time, math, SimpleCV
+from globalVars import CHANNEL_TARGETDATA
+from globalVars import BOT_ARDUINO_ADDRESS as ARDUINO_ADDRESS
+from globalVars import BOT_ARDUINO_BAUDRATE as ARDUINO_BAUDRATE
 
 # Functions for Arduino communication
-import arduinoInterface
-ARDUINO_ADDRESS = '/dev/ttyACM3'
+import arduinoInterface as aI
 
 # ZMQ settings
 import zmq
 context = zmq.Context()
 socket = context.socket(zmq.SUB)
+conflate = 1
+socket.setsockopt(zmq.CONFLATE, 1 ) # this tells the subscriber to only get the last message sent since the publisher is much faster
 socket.setsockopt(zmq.SUBSCRIBE, '')
-socket.connect("tcp://127.0.0.1:4002") # targetData topic
+socket.connect(CHANNEL_TARGETDATA)
 
-printing = True
-print_response = False
+poller = zmq.Poller()
+poller.register(socket, zmq.POLLIN)
+
+printing = False
+print_response = True
 
 dt = 0.0001
 
 vmin = 0.01
 maxV = 4.00
-a = 0.15
+a = 0.015
+a_search = 0.1
 
 vmax = [maxV, maxV, maxV, maxV]
 vCurr = [vmin, vmin, vmin, vmin]
-
-arduino = None
 
 # position format: (joint0, joint1, joint2, joint3)
 pos = [94, 155, 98, 145]
@@ -83,24 +89,28 @@ def determineVmax(pos, goal):
 # @param list goal: the target positions
 # @param i the index of the currently used point {needed for global vCurr}
 def determineSpeed(pos, goal, i):
-    global vCurr, vmax, vmin, a, braking
+    global vCurr, vmax, vmin, a, braking, searching
+    
+    # if searching the a can be larger
+    _a = a
+    if searching: _a = a_search
     
     if distanceRemaining(pos[i], goal[i]) < stoppingDistance(vCurr[i]):
         braking[i] = True
     
     if not braking[i]:
         if vCurr[i] < vmax[i]:
-            if vCurr[i]+a > vmax[i]:
+            if vCurr[i]+_a > vmax[i]:
                 vCurr[i] = vmax[i]
             else:
-                vCurr[i]+=a
+                vCurr[i]+=_a
     else:
         if vCurr[i] > vmin:
-            if vCurr[i]-a < vmin:
+            if vCurr[i]-_a < vmin:
                 vCurr[i] = vmin
                 print "minimum speed"
             else:
-                vCurr[i]-=a
+                vCurr[i]-=_a
                     
     if printing: print "vCurr:" + str(round(vCurr[i],2)) +"\t",
     return vCurr[i]
@@ -148,7 +158,7 @@ def move(pos, end_pose):
                 pos[i] = end_pose[i]
                 braking[i] = False
             
-            r = arduinoWrite(pos[i], i)
+            r = aI.arduinoWrite(pos[i], i)
             if print_response: print r
         if printing: print "."
 
@@ -159,7 +169,7 @@ millis = lambda: int(round(time.time() * 1000))
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
-r = arduinoConnect(ARDUINO_ADDRESS)
+r = aI.arduinoConnect(ARDUINO_ADDRESS, ARDUINO_BAUDRATE)
 if print_response: print r
 
 tar_x = 0
@@ -170,21 +180,28 @@ findTime = 0
 t_thresh = 1500
 searching = False
 searchDir = 1
-
+targetData = {
+                't'       : millis(),
+                'findTime': 0,
+                'found'   : False,
+                'tar_px'  : {'x':0, 'y':0},
+                'tar_dg'  : {'x':0, 'y':0}
+            }
 startTime = millis()
 lastLoop = 0
 
 while True: 
-    targetData = socket.recv_json()
+    # TODO: This is a bit of a hack. Find out whether the poller can return a json instead.
+    if len(poller.poll(10)) is not 0:
+        targetData = socket.recv_json()
     
-    if targetData is not None:
-        searching = !targetData['found']
+    if targetData['found']:
+        searching = False
         deg_x = targetData['tar_dg']['x'] 
         deg_y = targetData['tar_dg']['y']
         findTime = targetData['findTime']
         print "Hit!"
     elif millis() - findTime > t_thresh and not searching:
-        
         braking = [False, False, False, False]
         move(pos, pos_search)
         if done(pos, pos_search):

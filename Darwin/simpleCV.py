@@ -4,6 +4,8 @@ This script uses SimpleCV to find a blue LED and report its position relative to
 #!/user/bin/python
 import time, math, SimpleCV
 import zmq, json
+from globalVars import CHANNEL_TARGETDATA
+from globalVars import CAMERA_ID_NUMBER
 
 printing = True
 
@@ -12,7 +14,7 @@ dpx = 0.0725 # approximate amount of degrees per pixel
 width = 640
 height = 480
 display = SimpleCV.Display()
-cam = SimpleCV.Camera(1, {"width":width,"height":height})
+cam = SimpleCV.Camera(CAMERA_ID_NUMBER, {"width":width,"height":height})
 
 #target box for the marker
 box_d = 20
@@ -24,7 +26,7 @@ centre = (height/2, width/2)
 
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
-socket.bind("tcp://127.0.0.1:4999")
+socket.bind(CHANNEL_TARGETDATA)
 
 
 def search():
@@ -98,6 +100,8 @@ while display.isNotDone():
                     }
         
         socket.send_json(message)
+        print "Sent message: ",
+        print message
                         
         if lastFound == findTime:
             lossReported = True

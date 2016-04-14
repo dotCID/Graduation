@@ -34,7 +34,10 @@ import scipy, scipy.fftpack
 from datetime import datetime
 from time import sleep
 
-import serial
+from globalVars import CHANNEL_BEATDATA
+from globalVars import IMU_ARDUINO_ADDRESS
+from globalVars import IMU_ARDUINO_BAUDRATE
+import serial, time
 import zmq
 
 # Configuration: How often should we re-estimate the sample
@@ -70,7 +73,7 @@ phase_at_zero = 0
 last_beat = 0
 
 # MCW: Set up the Arduino
-imu_arduino = serial.Serial('/dev/ttyUSB0', 115200, timeout=.1)
+imu_arduino = serial.Serial(IMU_ARDUINO_ADDRESS, IMU_ARDUINO_BAUDRATE, timeout=.1)
 line = imu_arduino.readline().strip()
 print "imu: \n"
 print line
@@ -78,9 +81,10 @@ print line
 # MCW: Set up ZMQ publishing:
 context = zmq.Context()
 socket = context.socket(zmq.PUB)
-socket.bind("tcp://127.0.0.1:4002") # "beatData" channel
+socket.bind(CHANNEL_BEATDATA)
 
 # MCW: Function to read the imu arduino and check if the line is new
+# TODO: move this to the interface?
 def ardRead():
     global line, imu_arduino
     newline = imu_arduino.readline().strip()
@@ -238,16 +242,15 @@ while True:
     if samples_per_beat is not 0:
         if (current_sample_num % samples_per_beat) == 0 \
           and current_sample_num > last_beat + .8*samples_per_beat:
-            print "BEAT!"
-            bot_arduino.write("BEAT\n")
-            last_beat = current_sample_num
-        else:
             msg = {
                 't'   : millis(),
                 'f0'  : f0,
                 's0'  : s[0],
                 'beat': True
             }
+            last_beat = current_sample_num
     
     # MCW: Send message
+    print "Sending message: ", 
+    print msg
     socket.send_json(msg)
