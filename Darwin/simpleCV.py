@@ -100,7 +100,7 @@ while display.isNotDone():
                     }
         
         socket.send_json(message)
-        print "Sent message: ",
+        print "Sent targetData: ",
         print message
                         
         if lastFound == findTime:
