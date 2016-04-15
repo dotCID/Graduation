@@ -250,6 +250,10 @@ while True:
             }
             last_beat = current_sample_num
     
+    # MCW: Filter out idle beats (at least from output:
+    if s[0] < 1:
+        msg['beat'] = False
+    
     # MCW: Send message
     print "Sent beatData: ", 
     print msg

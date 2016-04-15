@@ -41,6 +41,7 @@ beatPoller.register(beatChannel, zmq.POLLIN)
 
 printing = False
 print_response = False
+testDelay = True # Controls whether the script counts down 10 seconds before executing tasks
 
 dt = 0.0001
 
@@ -53,11 +54,11 @@ vmax = [maxV, maxV, maxV, maxV]
 vCurr = [vmin, vmin, vmin, vmin]
 
 # position format: (joint0, joint1, joint2, joint3)
-pos = [94, 155, 98, 145]
-pos_default = (94, 155, 98, 145)
-pos_search = (94, 125, 98, 175)
-pos_search_left = (0, 125, 98, 175)
-pos_search_right = (180, 125, 98, 175)
+pos             = [ 94.0, 155.0, 98.0, 145.0]
+pos_default     = ( 94.0, 155.0, 98.0, 145.0)
+pos_search      = ( 94.0, 125.0, 98.0, 175.0)
+pos_search_left = (  0.0, 125.0, 98.0, 175.0)
+pos_search_right= (180.0, 125.0, 98.0, 175.0)
 braking = [False, False, False, False]
 
 # Modifiers for beat response
@@ -157,11 +158,15 @@ def done(list1, list2):
 # @param in2: some input variable
 def done2(in1, in2):
     if type(in1) != type(in2):
+        print "Unequal types: ",
+        print type(in1),type(in2)
         return False
     
     if type(in1) is 'list':
         return done(in1, in2)
-    else: return (in1 == in2)
+    elif abs(in1 - in2) < vmin*3:
+        return True
+    return False
 
 # Function to move the current position of the motors
 # @param list pos: the list of current positions
@@ -218,22 +223,31 @@ targetData = {
                 't'       : millis(),
                 'findTime': 0,
                 'found'   : False,
-                'tar_px'  : {'x':0, 'y':0},
-                'tar_dg'  : {'x':0, 'y':0}
+                'tar_px'  : {'x':0.0, 'y':0.0},
+                'tar_dg'  : {'x':0.0, 'y':0.0}
             }
 startTime = millis()
 lastLoop = 0
 
 while True: 
+    if testDelay:
+        for i in range(10):
+            print 10-i
+            time.sleep(1)
+        testDelay = False
+        
     # TODO: This is a bit of a hack. Find out whether the poller can return a json instead.
     if len(targetPoller.poll(1)) is not 0:
         targetData = targetChannel.recv_json()
     if len(beatPoller.poll(1)) is not 0:
         beatData = beatChannel.recv_json()
         
-        # if data is coming in, we should respond
-        if beatMod['dir'] ==0 and beatData['t']!=0:
+        # if the beat is not there, don't use the beat
+        if beatData['s0'] < 10:
+            beatMod['dir'] = 0
+        elif beatMod['dir'] == 0:
             beatMod['dir'] = -1
+            
         # if a beat is detected, respond by switching direction
         if beatData['beat']:
             print "Beat!"
@@ -269,6 +283,6 @@ while True:
         continue
       
     
-    newpos = (pos[0] + deg_x, pos[1], pos[2], pos[3] - deg_y)
+    newpos = (pos[0] + deg_x, pos[1], pos[2], pos[3] - deg_y)       # TODO: This causes a bit of a quirk with the beat modification
         
     move(pos, newpos)
