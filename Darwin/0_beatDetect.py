@@ -251,6 +251,6 @@ while True:
             last_beat = current_sample_num
     
     # MCW: Send message
-    print "Sending message: ", 
+    print "Sent beatData: ", 
     print msg
     socket.send_json(msg)
