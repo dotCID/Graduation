@@ -8,6 +8,7 @@ Gets data from a ZMQ topic
 
 import time, math, SimpleCV
 from globalVars import CHANNEL_TARGETDATA
+from globalVars import CHANNEL_BEATDATA
 from globalVars import BOT_ARDUINO_ADDRESS as ARDUINO_ADDRESS
 from globalVars import BOT_ARDUINO_BAUDRATE as ARDUINO_BAUDRATE
 
@@ -16,18 +17,30 @@ import arduinoInterface as aI
 
 # ZMQ settings
 import zmq
-context = zmq.Context()
-socket = context.socket(zmq.SUB)
-conflate = 1
-socket.setsockopt(zmq.CONFLATE, 1 ) # this tells the subscriber to only get the last message sent since the publisher is much faster
-socket.setsockopt(zmq.SUBSCRIBE, '')
-socket.connect(CHANNEL_TARGETDATA)
 
-poller = zmq.Poller()
-poller.register(socket, zmq.POLLIN)
+# Target channel:
+context = zmq.Context()
+targetChannel = context.socket(zmq.SUB)
+conflate = 1
+targetChannel.setsockopt(zmq.CONFLATE, 1 ) # this tells the subscriber to only get the last message sent since the publisher is much faster
+targetChannel.setsockopt(zmq.SUBSCRIBE, '')
+targetChannel.connect(CHANNEL_TARGETDATA)
+
+targetPoller = zmq.Poller()
+targetPoller.register(targetChannel, zmq.POLLIN)
+
+# Beat channel:
+context = zmq.Context()
+beatChannel = context.socket(zmq.SUB)
+beatChannel.setsockopt(zmq.CONFLATE, 1 ) # TODO: see if this is needed as it is possible to miss crucial beat data this way
+beatChannel.setsockopt(zmq.SUBSCRIBE, '')
+beatChannel.connect(CHANNEL_BEATDATA)
+
+beatPoller = zmq.Poller()
+beatPoller.register(beatChannel, zmq.POLLIN)
 
 printing = False
-print_response = True
+print_response = False
 
 dt = 0.0001
 
@@ -47,6 +60,11 @@ pos_search_left = (0, 125, 98, 175)
 pos_search_right = (180, 125, 98, 175)
 braking = [False, False, False, False]
 
+# Modifiers for beat response
+beatMod = {
+            'mod'   : 10,  # degrees of modification +/-
+            'dir'   : 0    # direction of modification. can be -1 | 0 | 1
+          }
 
 # Calculates the stopping distance based on the velocity given
 # @param double vCurr: velocity to stop from
@@ -127,35 +145,51 @@ def done(list1, list2):
     for i in range(len(list1)):
         if abs(list1[i] - list2[i]) < vmin * 3: #A bit of tolerance is needed to prevent infinite loops
             done_count+=1
+        
             
     if done_count == len(list1):
         return True
     else:
         return False
-
+        
+# Compare two inputs, being lists or variables. Must be of the same type or it will return false by default
+# @param in1: some input variable
+# @param in2: some input variable
+def done2(in1, in2):
+    if type(in1) != type(in2):
+        return False
+    
+    if type(in1) is 'list':
+        return done(in1, in2)
+    else: return (in1 == in2)
 
 # Function to move the current position of the motors
 # @param list pos: the list of current positions
 # @param list end_pose: the list of desired end poses
 def move(pos, end_pose):
-    global braking
-    if not done(pos, end_pose):
-        determineVmax(pos, end_pose)
+    global braking, beatMod
+    
+    # modify the end pose with the beat
+    tar_pose = [end_pose[0], end_pose[1] + (beatMod['mod'] * beatMod['dir']), \
+                end_pose[2], end_pose[3] - (beatMod['mod'] * beatMod['dir'])]   # 1 and 3 are opposed, hence + & -
+    
+    if not done(pos, tar_pose):
+        determineVmax(pos, tar_pose)
         
         for i in range(len(pos)):
-            if abs(pos[i] - end_pose[i]) > vmin * 5:
+            if abs(pos[i] - tar_pose[i]) > vmin * 5:
                 #there are some odd issues with the braking triggers not resetting properly
-                if abs(pos[i] - end_pose[i]) > vmin *10:
+                if abs(pos[i] - tar_pose[i]) > vmin *10:
                     braking[i] = False
                 
-                v = determineSpeed(pos, end_pose, i)
+                v = determineSpeed(pos, tar_pose, i)
                 
-                if pos[i] < end_pose[i]:
+                if pos[i] < tar_pose[i]:
                     pos[i]+=v
                 else:
                     pos[i]-=v
             else:
-                pos[i] = end_pose[i]
+                pos[i] = tar_pose[i]
                 braking[i] = False
             
             r = aI.arduinoWrite(pos[i], i)
@@ -192,9 +226,22 @@ lastLoop = 0
 
 while True: 
     # TODO: This is a bit of a hack. Find out whether the poller can return a json instead.
-    if len(poller.poll(10)) is not 0:
-        targetData = socket.recv_json()
-    
+    if len(targetPoller.poll(1)) is not 0:
+        targetData = targetChannel.recv_json()
+    if len(beatPoller.poll(1)) is not 0:
+        beatData = beatChannel.recv_json()
+        
+        # if data is coming in, we should respond
+        if beatMod['dir'] ==0 and beatData['t']!=0:
+            beatMod['dir'] = -1
+        # if a beat is detected, respond by switching direction
+        if beatData['beat']:
+            print "Beat!"
+            if beatMod['dir'] == 1:
+                beatMod['dir'] = -1
+            elif beatMod['dir'] == -1:
+                beatMod['dir'] = 1
+ 
     if targetData['found']:
         searching = False
         deg_x = targetData['tar_dg']['x'] 
@@ -204,19 +251,19 @@ while True:
     elif millis() - findTime > t_thresh and not searching:
         braking = [False, False, False, False]
         move(pos, pos_search)
-        if done(pos, pos_search):
+        if done2(pos[0], pos_search[0]):
             searching = True
             print "Searching!"
         continue            
     elif searching:
         if searchDir == 1: 
             move(pos, pos_search_left)
-            if done(pos, pos_search_left):
+            if done2(pos[0], pos_search_left[0]):  # only the bottom motor is used for this
                 searchDir = -1
                 print "Looking left now."
         else:
             move(pos, pos_search_right)
-            if done(pos, pos_search_right):
+            if done2(pos[0], pos_search_right[0]): # only the bottom motor is used for this
                 searchDir = 1
                 print "Looking right now."
         continue
