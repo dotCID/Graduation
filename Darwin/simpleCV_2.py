@@ -40,13 +40,13 @@ socket.bind(CHANNEL_TARGETDATA)
 
 def search(): # different target than simpleCV.py
     img = cam.getImage()
-    objective = img.colorDistance(color=(110,245,255)).invert()
+    objective = img.colorDistance(color=(40,70,255)).invert()
     seg_objective = objective.stretch(160,255)
     blobs = seg_objective.findBlobs()
     
     if blobs:
-        circles = blobs.filter([b.isCircle(0.5) for b in blobs])
-        if circles and  circles[-1].area() > 5:
+        circles = blobs.filter([b.isCircle(0.75) for b in blobs])
+        if circles and  circles[-1].area() > 2:
             center_point = (circles[-1].x, circles[-1].y)
             img.drawCircle((circles[-1].x, circles[-1].y), 10,SimpleCV.Color.YELLOW,3)
             

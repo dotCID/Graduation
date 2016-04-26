@@ -23,6 +23,6 @@ class RunCmd(threading.Thread):
         self.join(self.timeout)
 
         if self.is_alive():
-            self.p.terminate()      #use self.p.kill() if process needs a kill -9
+            self.p.kill()      #use self.p.kill() if process needs a kill -9
             self.join()
 

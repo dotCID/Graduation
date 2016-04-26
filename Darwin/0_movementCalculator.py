@@ -219,7 +219,7 @@ tar_y = 0
 deg_x = 0
 deg_y = 0
 findTime = 0
-t_thresh = 1500
+t_thresh = 3000
 searching = False
 searchDir = 1
 targetData = {
@@ -246,11 +246,13 @@ while True:
         beatData = beatChannel.recv_json()
         
         # if the beat is not there, don't use the beat
-        if beatData['s0'] < 10:
+        if beatData['s0'] < 1.5:
             beatMod['dir'] = 0
         elif beatMod['dir'] == 0:
             beatMod['dir'] = -1
             
+        # TODO: this is not the best way to go about this. Most likely this is the cause of the excessive movements that cause loss of target vision. (i.e. the bot keeps moving to one side while the target is not that way)
+        # TODO: Possible solution would be to move to a BPM rather than the beat pulses.    
         # if a beat is detected, respond by switching direction
         if beatData['beat']:
             print "Beat!"
