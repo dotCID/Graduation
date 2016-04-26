@@ -41,7 +41,7 @@ beatPoller.register(beatChannel, zmq.POLLIN)
 
 printing = False
 print_response = False
-testDelay = True # Controls whether the script counts down 10 seconds before executing tasks
+testDelay = False # Controls whether the script counts down 10 seconds before executing tasks
 
 dt = 0.0001
 
@@ -54,12 +54,15 @@ vmax = [maxV, maxV, maxV, maxV]
 vCurr = [vmin, vmin, vmin, vmin]
 
 # position format: (joint0, joint1, joint2, joint3)
-pos             = [ 94.0, 155.0, 98.0, 145.0]
-pos_default     = ( 94.0, 155.0, 98.0, 145.0)
-pos_search      = ( 94.0, 125.0, 98.0, 175.0)
-pos_search_left = (  0.0, 125.0, 98.0, 175.0)
-pos_search_right= (180.0, 125.0, 98.0, 175.0)
-braking = [False, False, False, False]
+pos             = [ 94.0, 155.0,  98.0, 145.0]
+pos_default     = ( 94.0, 155.0,  98.0, 145.0)
+pos_min         = (  0.0,  90.0,   0.0,  40.0)
+pos_max         = (180.0, 180.0, 180.0, 180.0)
+
+pos_search      = ( 94.0, 125.0,  98.0, 175.0)
+pos_search_left = (  0.0, 125.0,  98.0, 175.0)
+pos_search_right= (180.0, 125.0,  98.0, 175.0)
+braking         = [False, False, False, False]
 
 # Modifiers for beat response
 beatMod = {
@@ -189,9 +192,9 @@ def move(pos, end_pose):
                 
                 v = determineSpeed(pos, tar_pose, i)
                 
-                if pos[i] < tar_pose[i]:
+                if pos[i] < tar_pose[i] and pos[i]+v < pos_max[i]: # Should fix the "looking up infinitely" bug
                     pos[i]+=v
-                else:
+                elif pos[i]-v > pos_min[i]:
                     pos[i]-=v
             else:
                 pos[i] = tar_pose[i]
@@ -237,9 +240,9 @@ while True:
         testDelay = False
         
     # TODO: This is a bit of a hack. Find out whether the poller can return a json instead.
-    if len(targetPoller.poll(1)) is not 0:
+    if len(targetPoller.poll(0)) is not 0:
         targetData = targetChannel.recv_json()
-    if len(beatPoller.poll(1)) is not 0:
+    if len(beatPoller.poll(0)) is not 0:
         beatData = beatChannel.recv_json()
         
         # if the beat is not there, don't use the beat
@@ -281,8 +284,8 @@ while True:
                 searchDir = 1
                 print "Looking right now."
         continue
-      
     
-    newpos = (pos[0] + deg_x, pos[1], pos[2], pos[3] - deg_y)       # TODO: This causes a bit of a quirk with the beat modification
+    
+    newpos = (pos[0] + deg_x, pos[1] - deg_y/2, pos[2], pos[3] - deg_y)       # TODO: This causes a bit of a quirk with the beat modification
         
     move(pos, newpos)
