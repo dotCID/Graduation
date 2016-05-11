@@ -2,20 +2,29 @@ import subprocess
 from SimpleCV import Image  
 import time  
 
-call(“raspistill -n -t 0 -w %s -h %s -o image.bmp” % 640 480, shell=True)
+subprocess.call("raspistill -n -t 1 -w 640 -h 480 -o image.bmp", shell=True)
+print "Captured image"
+
+img = Image("image.bmp")
+
+print "image loaded"
 
 img = img.edges()    
 img.show()    
 time.sleep(5)
 
+print "Showing edges"
 
 img = img.binarize()  
 img.show()  
 time.sleep(5)    
 
+print "Binarizing"
 
-img = img.findBlobs()  
+blobs = img.findBlobs()  
 for blob in blobs:  
     blob.draw()  
 img.show()  
+
+print "Blobs" 
 time.sleep(5) 
