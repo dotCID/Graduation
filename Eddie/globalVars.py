@@ -42,3 +42,6 @@ user_contact_angles = {
                       }
 joint_positions     = [ 90.0 , 90.0, 90.0 ]
 
+## Margins
+MARGIN_USER_CONTACT = 10.0
+
