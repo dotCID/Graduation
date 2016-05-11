@@ -1,0 +1,226 @@
+'''
+This is the base class for Actions performed by Eddie and beyond. It is loosely based on the motionController.py script found in previous iterations.
+
+This script is meant for 3-servo robot models, as opposed to the 4-servo models Charles and Darwin where one servo was not used.
+
+The intention is for all actions that can be selected by the Action Picker to have a similar interface.
+'''
+import zmq, time, math
+from globalVars import CHANNEL_JOINTDATA
+
+# Exit codes for the actions
+from globalVars import EXIT_CODE_DONE
+from globalVars import EXIT_CODE_ERROR
+from globalVars import EXIT_CODE_A1
+from globalVars import EXIT_CODE_A2
+from globalVars import EXIT_CODE_A3
+from globalVars import EXIT_CODE_A4
+from globalVars import EXIT_CODE_A5
+
+class Action:
+    def __init__(self):
+        # Output control
+        self.printing = False
+        
+        # Testing settings
+        self.testDelay = False
+        
+        # Speed settings
+        self.minV = 0.01
+        self.maxV = 4.00
+        self.a = 0.015
+        self.vMax = [self.maxV, self.maxV, self.maxV]
+        self.vCurr= [self.minV, self.minV, self.minV]
+        
+        # Position settings
+        self.pos_default    = ( 94.0, 155.0, 145.0)
+        self.pos_min        = (  0.0,  90.0,  40.0)
+        self.pos_max        = (180.0, 180.0, 180.0)
+        self.braking        = [False, False, False]
+        
+        self.pos            = self.pos_default
+        
+        # Modifiers for beat response
+        self.beatMod = {
+                        'mod'   : 10,  # degrees of modification +/-
+                        'dir'   : 0    # direction of modification. can be -1 | 0 | 1
+                       }
+        
+        # ZMQ initialising
+        self.joint_context = zmq.Context()
+        self.joint_socket = self.joint_context.socket(zmq.PUB)
+        self.joint_socket.bind(CHANNEL_JOINTDATA)
+        
+        # Looping variables
+        self.loops_executed = 0
+        self.max_loops = 0
+        
+    def stoppingDistance(vCurr):
+        """
+        Calculates the stopping distance based on the velocity given.
+        @param double vCurr: velocity to stop from
+        """
+        
+        d_stop = (-(vCurr * vCurr)) / (2.0 * -a)      # -a because we're stopping
+        if printing: print "d_stop:" + str(round(d_stop,2)) +"\t",
+        return d_stop
+    
+    def distanceRemaining(pos, goal):
+        """
+        Function to determine remaining movement distance
+        @param pos:  current position
+        @param goal: target position
+        @return: double d_rem: distance remaining
+        """
+        
+        d_rem = abs(goal - pos)
+        if printing: print "d_rem:" + str(round(d_rem,2)) +"\t",
+        return d_rem
+    
+    def determineVmax(pos, goal):
+        """
+        Determines the relative maximume velocities needed to finish all movement at the same time
+        @param list pos: a list of current positions
+        @param list goal: the target positions
+        """
+        
+        d_rem = []
+        for i in range(len(pos)):
+            d_rem.append(distanceRemaining(pos[i], goal[i]))
+        
+        i_max = d_rem.index(max(d_rem))
+        if d_rem[i_max] == 0: return
+        self.vMax[i_max] = self.maxV
+        
+        for j in range(3):
+            if not j == i_max:
+                self.vMax[j] = d_rem[j] / d_rem[i_max] / self.maxV
+
+    def determineSpeed(pos, goal, i):
+        """
+        Function to determine the speed of the joints
+        @param list pos: the current joint positions
+        @param list goal: the target positions
+        @param i the index of the currently used point {needed for global vCurr}
+        """
+        
+        _a = self.a
+        
+        #if searching: _a = a_search  #TODO: this is a possible improvement for certain actions -> override with a_search >> a
+        
+        if distanceRemaining(pos[i], goal[i]) < stoppingDistance(self.vCurr[i]):
+            self.braking[i] = True
+        
+        if not self.braking[i]:
+            if self.vCurr[i] < self.vMax[i]:
+                if self.vCurr[i]+_a > self.vMax[i]:
+                    self.vCurr[i] = self.vMax[i]
+                else:
+                    self.vCurr[i]+=_a
+        else:
+            if self.vCurr[i] > self.vMin:
+                if self.vCurr[i]-_a < self.vMin:
+                    self.vCurr[i] = self.vMin
+                    if printing: print "minimum speed"
+                else:
+                    self.vCurr[i]-=_a
+                        
+        if printing: print "vCurr:" + str(round(self.vCurr[i],2)) +"\t",
+        return self.vCurr[i]
+        
+    def done_list(list1, list2):
+        """
+        Compare two lists and determine whether their contents are equal
+        @param list list1: some list of arbitrary length
+        @param list list2: some list of the same length
+        """
+        
+        if len(list1)!=len(list2): return False
+        
+        done_count = 0
+        
+        for i in range(len(list1)):
+            if abs(list1[i] - list2[i]) < self.vMin * 3: #A bit of tolerance is needed to prevent infinite loops
+                done_count+=1
+            
+                
+        if done_count == len(list1):
+            return True
+        else:
+            return False
+            
+    def done(in1, in2):
+        """
+        Compare two inputs, being lists or variables. Must be of the same type or it will return false by default
+        @param in1: some input variable
+        @param in2: some input variable
+        """
+        
+        if type(in1) != type(in2):
+            print "Unequal types: ",
+            print type(in1),type(in2)
+            return False
+        
+        if type(in1) is 'list':
+            return  self.done_list(in1, in2)
+        elif abs(in1 - in2) < self.vMin*3:
+            return True
+        return False
+        
+    def move(pos, end_pose):
+        """
+        Function to change the intended joint positions. This differs from Charles and Darwin in that a separate process will handle sending instructions, and Actions will only modify CHANNEL_JOINTDATA.
+        @param list pos: the list of current positions
+        @param list end_pose: the list of desired end poses
+        """
+        
+        # modify the end pose with the beat
+        # 1 and 3 are opposed, hence + & -
+        tar_pose = [end_pose[0], end_pose[1] + (self.beatMod['mod'] * self.beatMod['dir']), \
+                    end_pose[2], end_pose[3] - (self.beatMod['mod'] * self.beatMod['dir'])]
+        
+        if not self.done_list(pos, tar_pose):
+            self.determineVmax(pos, tar_pose)
+            
+            for i in range(len(pos)):
+                if abs(pos[i] - tar_pose[i]) > self.vMin * 5:
+                    #there are some odd issues with the braking triggers not resetting properly
+                    if abs(pos[i] - tar_pose[i]) > self.vMin * 10:
+                        self.braking[i] = False
+                    
+                    v = self.determineSpeed(pos, tar_pose, i)
+                    
+                    if pos[i] < tar_pose[i] and pos[i]+v < self.pos_max[i]: # Should fix the "looking up infinitely" bug
+                        pos[i]+=v
+                    elif pos[i]-v > self.pos_min[i]:
+                        pos[i]-=v
+                else:
+                    pos[i] = tar_pose[i]
+                    self.braking[i] = False
+                
+            joint_socket.send_json(pos)
+    
+    def loopCheck(self):
+        if self.loops_executed >= self.max_loops:
+            self.loops_executed = 0
+            return EXIT_CODE_DONE
+        else:
+            self.loops_executed+=1
+            return 1
+        
+    
+    def execute(self,loops = 50):
+        """
+        This method is intended to be overwritten by the separate Actions, but should always start with
+        
+        self.max_loops = loops
+        if self.loopCheck() == EXIT_CODE_DONE:
+            return EXIT_CODE_DONE
+        
+        @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
+        """
+        self.max_loops = loops
+        if self.loopCheck() == EXIT_CODE_DONE:
+            return EXIT_CODE_DONE
+        print self.loops_executed
+        return EXIT_CODE_A1
