@@ -1,3 +1,4 @@
+#!/user/bin/python
 """
 Short script to test the functionality of code.
 """

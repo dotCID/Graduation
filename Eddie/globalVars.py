@@ -33,3 +33,12 @@ EXIT_CODE_A3    = 3
 EXIT_CODE_A4    = 4
 EXIT_CODE_A5    = 5
 
+## Last known user positions
+user_contact_angles = {
+                        't' : 0,
+                        'x' : 0.0,
+                        'y' : 0.0,
+                        'z' : 0.0
+                      }
+joint_positions     = [ 90.0 , 90.0, 90.0 ]
+

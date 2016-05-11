@@ -1,3 +1,4 @@
+#!/user/bin/python
 '''
 A simple script to provide some dummy data for testing purposes
 '''
