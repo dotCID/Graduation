@@ -7,7 +7,7 @@ This script is meant for 3-servo robot models, as opposed to the 4-servo models 
 The intention is for all actions that can be selected by the Action Picker to have a similar interface.
 '''
 import zmq, time, math
-from globalVars import CHANNEL_JOINTDATA
+# from globalVars import CHANNEL_JOINTDATA #TODO: replace this with a different system as ZMQ cannot handle multiple publishers.
 
 # Exit codes for the actions
 from globalVars import EXIT_CODE_DONE
@@ -48,9 +48,11 @@ class Action:
                        }
         
         # ZMQ initialising
-        self.joint_context = zmq.Context()
-        self.joint_socket = self.joint_context.socket(zmq.PUB)
-        self.joint_socket.bind(CHANNEL_JOINTDATA)
+        #TODO: replace this with a different system as ZMQ cannot handle multiple publishers.
+
+        #self.joint_context = zmq.Context()
+        #self.joint_socket = self.joint_context.socket(zmq.PUB)
+        #self.joint_socket.bind(CHANNEL_JOINTDATA)
         
         # Looping variables
         self.loops_executed = 0
@@ -198,8 +200,11 @@ class Action:
                 else:
                     pos[i] = tar_pose[i]
                     self.braking[i] = False
-                
-            joint_socket.send_json(pos)
+          
+            #TODO: replace this with a different system as ZMQ cannot handle multiple publishers.
+    
+            #joint_socket.send_json(pos)
+    
     
     def loopCheck(self):
         if self.loops_executed >= self.max_loops:
