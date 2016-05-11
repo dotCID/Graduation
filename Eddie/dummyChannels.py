@@ -3,6 +3,12 @@ A simple script to provide some dummy data for testing purposes
 '''
 import zmq, json, random, time
 
+from globalVars import CHANNEL_TARGETDATA
+from globalVars import CHANNEL_MOVEMENTDATA
+from globalVars import CHANNEL_ENERGYDATA
+from globalVars import CHANNEL_MODE
+from globalVars import CHANNEL_BPM
+
 #get current time in milliseconds
 millis = lambda: int(round(time.time() * 1000))
 
@@ -29,6 +35,14 @@ mode_context = zmq.Context()
 mode_socket = mode_context.socket(zmq.PUB)
 mode_socket.bind(CHANNEL_MODE)
 
+## CHANNEL_BPM
+bpm_context = zmq.Context()
+bpm_socket = bpm_context.socket(zmq.PUB)
+bpm_socket.bind(CHANNEL_BPM)
+
+bpm = 120.0
+bpm_change_per = 10000 #ms
+bpm_last_change = millis()
 
 while True:
 
@@ -81,5 +95,16 @@ while True:
                     'mode': mode
                    }
     mode_socket.send_json(mode_message)
+    
+    ## CHANNEL_BPM
+    if millis() - bpm_last_changed > bpm_change_per:
+        bpm = bpm + random.randrange(-10, 10)
+        bpm_last_changed = millis()
+
+    bpm_message = {
+                    't'  : millis(),
+                    'bpm': bpm
+                  }
+    bpm_socket.send_json(bpm_message)
     
     time.sleep(50)
