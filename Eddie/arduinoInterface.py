@@ -1,11 +1,15 @@
 #!/usr/bin/python
 import serial, time
 
-jointNames = ('BH', 'BV', 'TH', 'TV')
+jointNames = ('BH', 'BV', 'TV')
+currAngles = [ 0.0,  0.0,  0.0,  0.0]
 
-# Function to connect to the Arduino
-# @param str port: the port where the Arduino is to be found, f.i. '/dev/ttyACM6'
 def arduinoConnect(port, baudrate):
+    """
+    Function to connect to the Arduino
+    @param str port: the port where the Arduino is to be found, f.i. '/dev/ttyACM6'
+    """
+    
     global arduino
     print "connecting"
     arduino = serial.Serial(port, baudrate, timeout=.1)
@@ -14,11 +18,33 @@ def arduinoConnect(port, baudrate):
     return response
 
 
-# Function to write the motor commands over Serial to the Arduino and print the response(s)
-# @param double val: the value to be written
-# @param int i: the index number of the motor. This corresponds to the names in jointNames.
 def arduinoWrite(val, i):
+    """
+    Function to write the motor commands over Serial to the Arduino and print the response(s)
+    @param double val: the value to be written
+    @param int i: the index number of the motor. This corresponds to the names in jointNames.
+    """
+    
     global arduino
     arduino.write(jointNames[i] + " "+ str(val) +"\n")
     response = arduino.readline()
     return response
+    
+def moveTo(joint_angles):
+    """
+    Sends the target joint angles to the Arduino. Returns whatever the Arduino responded with.
+    @param joint_angles: An array of doubles representing angles for all joints
+    """
+    
+    global currAngles
+    totalResponse = ""
+    
+    for i in range(len(joint_angles)):
+        totalResponse += arduinoWrite(joint_angles[i], i)
+        currAngles[i] = joint_angles[i]
+    
+    return totalResponse
+
+def getAngles():
+    """    Simply return the currently set joint angles.    """    
+    return currAngles
