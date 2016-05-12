@@ -10,7 +10,6 @@ CHANNEL_MOVEMENTDATA= "tcp://127.0.0.1:4003"
 CHANNEL_ENERGYDATA  = "tcp://127.0.0.1:4004"
 CHANNEL_MODE        = "tcp://127.0.0.1:4005"
 CHANNEL_BPM         = "tcp://127.0.0.1:4006"
-CHANNEL_JOINTDATA   = "tcp://127.0.0.1:4007"
 
 ## Arduinos
 BOT_ARDUINO_ADDRESS = '/dev/ttyACM3'
@@ -45,3 +44,5 @@ joint_positions     = [ 90.0 , 90.0, 90.0 ]
 ## Margins
 MARGIN_USER_CONTACT = 10.0
 
+## Debug values
+printing  = True

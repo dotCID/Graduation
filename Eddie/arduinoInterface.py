@@ -2,7 +2,8 @@
 import serial, time
 
 jointNames = ('BH', 'BV', 'TV')
-currAngles = [ 0.0,  0.0,  0.0,  0.0]
+currAngles = [ 0.0,  0.0,  0.0]
+alreadyConnected = False
 
 def arduinoConnect(port, baudrate):
     """
@@ -10,12 +11,17 @@ def arduinoConnect(port, baudrate):
     @param str port: the port where the Arduino is to be found, f.i. '/dev/ttyACM6'
     """
     
-    global arduino
-    print "connecting"
-    arduino = serial.Serial(port, baudrate, timeout=.1)
-    time.sleep(1)
-    response = arduino.readline()
-    return response
+    global arduino, alreadyConnected
+    if not alreadyConnected:
+        print "Connecting to Arduino on", port
+        arduino = serial.Serial(port, baudrate, timeout=.1)
+        time.sleep(1)
+        response = arduino.readline()
+        alreadyConnected = True
+        return response
+    else:
+        print "Already connected to Arduino on", port
+        return ""
 
 
 def arduinoWrite(val, i):

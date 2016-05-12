@@ -7,9 +7,9 @@ This script is meant for 3-servo robot models, as opposed to the 4-servo models 
 The intention is for all actions that can be selected by the Action Picker to have a similar interface.
 '''
 import zmq, time, math
-# from globalVars import CHANNEL_JOINTDATA #TODO: replace this with a different system as ZMQ cannot handle multiple publishers.
+import arduinoInterface as aI # This will replace the JointData channel. All subclasses share access to this interface and it contains the current joint data
 
-# Exit codes for the actions
+## Exit codes for the actions
 from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
 from globalVars import EXIT_CODE_A1
@@ -17,6 +17,13 @@ from globalVars import EXIT_CODE_A2
 from globalVars import EXIT_CODE_A3
 from globalVars import EXIT_CODE_A4
 from globalVars import EXIT_CODE_A5
+
+## Address data
+from globalVars import BOT_ARDUINO_ADDRESS as ARDUINO_ADDRESS
+from globalVars import BOT_ARDUINO_BAUDRATE as ARDUINO_BAUDRATE
+
+## Other
+from globalVars import printing
 
 class Action:
     def __init__(self):
@@ -46,17 +53,15 @@ class Action:
                         'mod'   : 10,  # degrees of modification +/-
                         'dir'   : 0    # direction of modification. can be -1 | 0 | 1
                        }
-        
-        # ZMQ initialising
-        #TODO: replace this with a different system as ZMQ cannot handle multiple publishers.
-
-        #self.joint_context = zmq.Context()
-        #self.joint_socket = self.joint_context.socket(zmq.PUB)
-        #self.joint_socket.bind(CHANNEL_JOINTDATA)
-        
+               
         # Looping variables
         self.loops_executed = 0
         self.max_loops = 0
+        
+        # Initialise the Arduino
+        r = aI.arduinoConnect(ARDUINO_ADDRESS, ARDUINO_BAUDRATE)
+        if printing: print r
+        
         
     def stoppingDistance(vCurr):
         """
@@ -170,12 +175,12 @@ class Action:
             return True
         return False
         
-    def move(pos, end_pose):
+    def move(end_pose):
         """
-        Function to change the intended joint positions. This differs from Charles and Darwin in that a separate process will handle sending instructions, and Actions will only modify CHANNEL_JOINTDATA.
-        @param list pos: the list of current positions
+        Function to change the intended joint positions.
         @param list end_pose: the list of desired end poses
         """
+        pos = aI.getAngles() ## This is the new method of getting current joint data
         
         # modify the end pose with the beat
         # 1 and 3 are opposed, hence + & -
@@ -201,9 +206,8 @@ class Action:
                     pos[i] = tar_pose[i]
                     self.braking[i] = False
           
-            #TODO: replace this with a different system as ZMQ cannot handle multiple publishers.
-    
-            #joint_socket.send_json(pos)
+            r = aI.moveTo(pos)
+            if printing: print r
     
     
     def loopCheck(self):
