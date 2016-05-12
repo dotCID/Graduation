@@ -5,6 +5,7 @@ This script picks and executes Actions based on external inputs and a RNG. This 
 
 import zmq, time, math, random
 
+## Actions
 from Actions import Action
 from Actions import Action_Contact
 from Actions import Action_Scan
@@ -12,6 +13,7 @@ from Actions import Action_Focus
 from Actions import Action_Stevie
 from Actions import Action_Bored
 
+## Global Variables
 from globalVars import CHANNEL_MOVEMENTDATA
 from globalVars import CHANNEL_ENERGYDATA
 from globalVars import CHANNEL_TARGETDATA
