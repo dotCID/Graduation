@@ -24,11 +24,12 @@ from globalVars import user_contact_angles
 # Exit codes for the actions
 from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
-from globalVars import EXIT_CODE_A1
-from globalVars import EXIT_CODE_A2
-from globalVars import EXIT_CODE_A3
-from globalVars import EXIT_CODE_A4
-from globalVars import EXIT_CODE_A5
+
+from globalVars import EXIT_CODE_CONTACT
+from globalVars import EXIT_CODE_SCAN
+from globalVars import EXIT_CODE_FOCUS
+from globalVars import EXIT_CODE_STEVIE
+from globalVars import EXIT_CODE_BORED
 
 ## ZMQ Movement Data channel - Provides data on user position
 mv_context = zmq.Context()

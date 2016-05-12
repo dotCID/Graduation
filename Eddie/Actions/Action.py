@@ -12,11 +12,11 @@ import arduinoInterface as aI # This will replace the JointData channel. All sub
 ## Exit codes for the actions
 from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
-from globalVars import EXIT_CODE_A1
-from globalVars import EXIT_CODE_A2
-from globalVars import EXIT_CODE_A3
-from globalVars import EXIT_CODE_A4
-from globalVars import EXIT_CODE_A5
+from globalVars import EXIT_CODE_CONTACT
+from globalVars import EXIT_CODE_SCAN
+from globalVars import EXIT_CODE_FOCUS
+from globalVars import EXIT_CODE_STEVIE
+from globalVars import EXIT_CODE_BORED
 
 ## Address data
 from globalVars import BOT_ARDUINO_ADDRESS as ARDUINO_ADDRESS
@@ -26,6 +26,15 @@ from globalVars import BOT_ARDUINO_BAUDRATE as ARDUINO_BAUDRATE
 from globalVars import printing
 
 class Action:
+    ## Last known user positions. Accessible from subclasses via Action.*
+    user_contact_angles = {
+                            't' : 0,
+                            'x' : 0.0,
+                            'y' : 0.0,
+                            'z' : 0.0
+                          }
+    contact_joint_positions     = [ 90.0 , 90.0, 90.0 ]
+
     def __init__(self):
         # Output control
         self.printing = False

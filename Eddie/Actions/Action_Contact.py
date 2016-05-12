@@ -6,7 +6,8 @@ from Action import Action
 
 from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
-from globalVars import EXIT_CODE_A1
+from globalVars import EXIT_CODE_SCAN
+from globalVars import EXIT_CODE_CONTACT
 
 class SpecificAction(Action):
     def execute(self,loops = 50):
@@ -17,5 +18,15 @@ class SpecificAction(Action):
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
-        print self.loops_executed
-        return EXIT_CODE_A1
+        
+        # Test for shared vars
+        Action.user_contact_angles = {
+                        't' : 5,
+                        'x' : 1.0,
+                        'y' : 2.0,
+                        'z' : 3.0
+                      }
+#        print self.loops_executed
+        print "Contact: new contact angles:",Action.user_contact_angles
+        
+        return EXIT_CODE_SCAN
