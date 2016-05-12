@@ -26,20 +26,11 @@ EXIT_CODE_DONE  = 0
 EXIT_CODE_ERROR = -1
 
 # Continue to a different Action:
-EXIT_CODE_A1    = 1
-EXIT_CODE_A2    = 2
-EXIT_CODE_A3    = 3
-EXIT_CODE_A4    = 4
-EXIT_CODE_A5    = 5
-
-## Last known user positions
-user_contact_angles = {
-                        't' : 0,
-                        'x' : 0.0,
-                        'y' : 0.0,
-                        'z' : 0.0
-                      }
-joint_positions     = [ 90.0 , 90.0, 90.0 ]
+EXIT_CODE_CONTACT  = 1
+EXIT_CODE_SCAN     = 2
+EXIT_CODE_FOCUS    = 3
+EXIT_CODE_STEVIE   = 4
+EXIT_CODE_BORED    = 5
 
 ## Margins
 MARGIN_USER_CONTACT = 10.0
