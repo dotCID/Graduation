@@ -3,7 +3,7 @@ import serial, time
 
 jointNames = ('BH', 'BV', 'TV')
 currAngles = [ 0.0,  0.0,  0.0]
-alreadyConnected = False
+connected = False
 
 def arduinoConnect(port, baudrate):
     """
@@ -11,14 +11,17 @@ def arduinoConnect(port, baudrate):
     @param str port: the port where the Arduino is to be found, f.i. '/dev/ttyACM6'
     """
     
-    global arduino, alreadyConnected
-    if not alreadyConnected:
+    global arduino, connected
+    if not connected:
         print "Connecting to Arduino on", port
-        arduino = serial.Serial(port, baudrate, timeout=.1)
-        time.sleep(1)
-        response = arduino.readline()
-        alreadyConnected = True
-        return response
+        try:
+            arduino = serial.Serial(port, baudrate, timeout=.1)
+            time.sleep(1)
+            response = arduino.readline()
+            connected = True
+            return response
+        except serial.serialutil.SerialException:
+            print "No serial connection on ", port
     else:
         print "Already connected to Arduino on", port
         return ""
@@ -30,11 +33,11 @@ def arduinoWrite(val, i):
     @param double val: the value to be written
     @param int i: the index number of the motor. This corresponds to the names in jointNames.
     """
-    
-    global arduino
-    arduino.write(jointNames[i] + " "+ str(val) +"\n")
-    response = arduino.readline()
-    return response
+    if connected:
+        global arduino
+        arduino.write(jointNames[i] + " "+ str(val) +"\n")
+        response = arduino.readline()
+        return response
     
 def moveTo(joint_angles):
     """
