@@ -5,7 +5,12 @@ This script picks and executes Actions based on external inputs and a RNG. This 
 
 import zmq, time, math, random
 
-import Action, Action1, Action2, Action3, Action4, Action5 #TODO: write specific Actions
+from Actions import Action
+from Actions import Action_Contact
+from Actions import Action_Scan
+from Actions import Action_Focus
+from Actions import Action_Stevie
+from Actions import Action_Bored
 
 from globalVars import CHANNEL_MOVEMENTDATA
 from globalVars import CHANNEL_ENERGYDATA
@@ -59,13 +64,14 @@ mode_socket = mode_context.socket(zmq.PUB)
 mode_socket.bind(CHANNEL_MODE)
 
 ## Actions
+''' **** NOTE THAT THESE MUST HAVE THE SAME INDEX IN THIS ARRAY AS THEIR NORMAL EXIT CODE **** '''
 actions = [
             Action.Action(), # to prevent confusion this is a spacer
-            Action1.Action1(),
-            Action2.Action2(),
-            Action3.Action3(),
-            Action4.Action4(),
-            Action5.Action5()
+            Action_Contact.SpecificAction(),
+            Action_Scan.SpecificAction(),
+            Action_Focus.SpecificAction(),
+            Action_Stevie.SpecificAction(),
+            Action_Bored.SpecificAction()
           ]
 
 ## Helper Functions

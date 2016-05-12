@@ -8,7 +8,7 @@ from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
 from globalVars import EXIT_CODE_A4
 
-class Action4(Action):
+class SpecificAction(Action):
     def execute(self,loops = 50):
         """
         Main executing method of this Action.

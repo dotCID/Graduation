@@ -6,9 +6,9 @@ from Action import Action
 
 from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
-from globalVars import EXIT_CODE_A5
+from globalVars import EXIT_CODE_A2
 
-class Action5(Action):
+class SpecificAction(Action):
     def execute(self,loops = 50):
         """
         Main executing method of this Action.
@@ -18,4 +18,4 @@ class Action5(Action):
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
         print self.loops_executed
-        return EXIT_CODE_A5
+        return EXIT_CODE_A2
