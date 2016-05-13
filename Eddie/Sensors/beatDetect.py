@@ -23,7 +23,9 @@
 #
 # Inspired by @TJL's tweet.
 
-# MCW: Changed from stdin to serial port for Arduino IMU use.
+# @author https://github.com/dotCID :
+# Adapted for use during my graduation project. 
+# Most additions/alterations are marked with "MCW"
 
 import sys
 import numpy
@@ -31,7 +33,12 @@ import numpy.linalg
 import scipy, scipy.fftpack
 from datetime import datetime
 from time import sleep
-import serial
+
+from globalVars import CHANNEL_BEATDATA
+from globalVars import IMU_ARDUINO_ADDRESS
+from globalVars import IMU_ARDUINO_BAUDRATE
+import serial, time
+import zmq
 
 # Configuration: How often should we re-estimate the sample
 # frequency (based on how fast data is coming in, as long
@@ -65,29 +72,33 @@ history_phase = [0.0 for i in xrange(10)] # computed phases
 phase_at_zero = 0
 last_beat = 0
 
-# Set up the Arduinos and definition
-bot_arduino = serial.Serial('/dev/ttyACM3', 115200, timeout=.1)
-bot_line = bot_arduino.readline().strip()
-print "bot: \n"
-print bot_line
-
-imu_arduino = serial.Serial('/dev/ttyUSB0', 115200, timeout=.1)
+# MCW: Set up the Arduino
+imu_arduino = serial.Serial(IMU_ARDUINO_ADDRESS, IMU_ARDUINO_BAUDRATE, timeout=.1)
 line = imu_arduino.readline().strip()
 print "imu: \n"
 print line
 
-# read the imu arduino and check if the line is new
+# MCW: Set up ZMQ publishing:
+context = zmq.Context()
+socket = context.socket(zmq.PUB)
+socket.bind(CHANNEL_BEATDATA)
+
+# MCW: Function to read the imu arduino and check if the line is new
+# TODO: move this to the interface?
 def ardRead():
     global line, imu_arduino
     newline = imu_arduino.readline().strip()
     if newline != line: 
         line = newline
     return line
+    
+# MCW: Arduino-style millis() function for timekeeping
+millis = lambda: int(round(time.time() * 1000))
 
-print "Beat.py is now running."
+print "--------------\nBeat.py is now running.\n--------------\n"
 
 while True:
-    # Read from the device.
+    # MCW: Read from the device.
     arduino_data = ardRead()
     
     # MCW: Testing with the imu script, all useful data starts with a ">" character
@@ -97,6 +108,7 @@ while True:
         sleep(0.02)
         continue
     elif arduino_data[0] != ">":
+        # input not relevant for this script
         print arduino_data
         sleep(0.02)
         continue
@@ -197,7 +209,15 @@ while True:
     f0 = numpy.mean(history_f0)
     
     # Print the fundamental frequency and the 'average' acceleration.
-    print f0, s[0], sample_freq
+    #print f0, s[0]
+    
+    # MCW: changed above to zmq JSON
+    msg = {
+                't'   : millis(),
+                'f0'  : f0,
+                's0'  : s[0],
+                'beat': False
+            }
     
     samples_per_beat = int(round(sample_freq / f0))
     if (current_sample_num % beat_phase_every) == 0:
@@ -222,7 +242,19 @@ while True:
     if samples_per_beat is not 0:
         if (current_sample_num % samples_per_beat) == 0 \
           and current_sample_num > last_beat + .8*samples_per_beat:
-            print "BEAT!"
-            bot_arduino.write("BEAT\n")
+            msg = {
+                't'   : millis(),
+                'f0'  : f0,
+                's0'  : s[0],
+                'beat': True
+            }
             last_beat = current_sample_num
-        
+    
+    # MCW: Filter out idle beats (at least from output:
+    if s[0] < 1:
+        msg['beat'] = False
+    
+    # MCW: Send message
+    print "Sent beatData: ", 
+    print msg
+    socket.send_json(msg)

@@ -2,29 +2,104 @@
 """
 Placeholder specific Action class.
 """
+
+import random
 from Action import Action
 
+## Exit codes
 from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
 from globalVars import EXIT_CODE_SCAN
 from globalVars import EXIT_CODE_CONTACT
 
+EXIT_CODE_SELF = EXIT_CODE_SCAN
+
+## zmq
+import zmq
+from globalVars import CHANNEL_TARGETDATA
+from globalVars import CHANNEL_MOVEMENTDATA
+
+
 class SpecificAction(Action):
+    # Target channel:
+    context = zmq.Context()
+    targetChannel = context.socket(zmq.SUB)
+    targetChannel.setsockopt(zmq.CONFLATE, 1 )
+    targetChannel.setsockopt(zmq.SUBSCRIBE, '')
+    targetChannel.connect(CHANNEL_TARGETDATA)
+    targetPoller = zmq.Poller()
+    targetPoller.register(targetChannel, zmq.POLLIN)
+    
+    ## ZMQ Movement Data channel - Provides data on user position
+    mv_context = zmq.Context()
+    movementChannel = mv_context.socket(zmq.SUB)
+    movementChannel.setsockopt(zmq.CONFLATE, 1 )
+    movementChannel.setsockopt(zmq.SUBSCRIBE, '')
+    movementChannel.connect(CHANNEL_MOVEMENTDATA)
+
+    
+    # Variables
+    targetData = {
+                            't'       : 0,
+                            'findTime': 0,
+                            'found'   : False,
+                            'tar_px'  : {'x':0.0, 'y':0.0},
+                            'tar_dg'  : {'x':0.0, 'y':0.0}
+                        }
+    findTime = 0
+    deg_x = 0.0
+    deg_y = 0.0
+    
+    movementData = {
+                            't'       : 0,
+                            'deg_x'   : 180.0,
+                            'deg_y'   : 180.0,
+                            'deg_z'   : 180.0
+                           }
+                           
+    scan_pos_L = [  0.0, 125.0, 175.0]
+    scan_pos_R = [180.0, 125.0, 175.0]
+    
+    def getTargetData(self):
+        """ Returns either new information or the last known position of the target. """
+        if len(self.targetPoller.poll(0)) is not 0:
+            return self.targetChannel.recv_json()
+        else: return self.targetData
+    
+    def getMovementData(self):
+        """ Returns either new information or the last known user position """
+        if len(self.movementPoller.poll(0)) is not 0:
+            return self.movementChannel.recv_json()
+        else: return self.movementData
+    
     def execute(self,loops = 50):
         """
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
         
-        global user_contact_angles
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
-        
-        print "Scan:",Action.user_contact_angles
-        
-        if Action.user_contact_angles['x'] is 0:
-            return EXIT_CODE_CONTACT
             
-        print self.loops_executed
-        return EXIT_CODE_SCAN
+        targetData = self.getTargetData()
+        if targetData['found']:
+            if printing: print "Action_Scan: Found target"
+            Action.contact_joint_positions = currentPosition()
+            movementData = getMovementData()
+            Action.user_contact_angles = movementData
+            return EXIT_CODE_CONTACT
+        elif self.done(self.currentPosition(), Action.contact_joint_positions):
+            rd = random.random()
+            if rd > 0.5:
+                self.pos_target = scan_pos_L
+            else:
+                self.pos_target = scan_pos_R
+        elif self.done(self.currentPosition(), self.scan_pos_L):
+            self.pos_target = scan_pos_R
+        elif self.done(self.currentPosition(), self.scan_pos_R):
+            self.pos_target = scan_pos_L
+        
+        self.move(self.pos_target)
+        
+        return EXIT_CODE_SELF

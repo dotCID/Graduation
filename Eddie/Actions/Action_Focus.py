@@ -6,7 +6,7 @@ from Action import Action
 
 from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
-from globalVars import EXIT_CODE_A3
+from globalVars import EXIT_CODE_FOCUS
 
 class SpecificAction(Action):
     def execute(self,loops = 50):
@@ -17,5 +17,5 @@ class SpecificAction(Action):
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
-        print EXIT_CODE_A3, self.loops_executed
-        return EXIT_CODE_A3
+       # print EXIT_CODE_FOCUS, self.loops_executed
+        return EXIT_CODE_FOCUS

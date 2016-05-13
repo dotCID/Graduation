@@ -6,7 +6,7 @@ This script is meant for 3-servo robot models, as opposed to the 4-servo models 
 
 The intention is for all actions that can be selected by the Action Picker to have a similar interface.
 '''
-import zmq, time, math
+import time
 import arduinoInterface as aI # This will replace the JointData channel. All subclasses share access to this interface and it contains the current joint data
 
 ## Exit codes for the actions
@@ -24,14 +24,15 @@ from globalVars import BOT_ARDUINO_BAUDRATE as ARDUINO_BAUDRATE
 
 ## Other
 from globalVars import printing
+from globalVars import TEST_MODE_SLOW
 
 class Action:
     ## Last known user positions. Accessible from subclasses via Action.*
     user_contact_angles = {
                             't' : 0,
-                            'x' : 0.0,
-                            'y' : 0.0,
-                            'z' : 0.0
+                            'deg_x' : 0.0,
+                            'deg_y' : 0.0,
+                            'deg_z' : 0.0
                           }
     contact_joint_positions     = [ 90.0 , 90.0, 90.0 ]
 
@@ -54,8 +55,7 @@ class Action:
         self.pos_min        = (  0.0,  90.0,  40.0)
         self.pos_max        = (180.0, 180.0, 180.0)
         self.braking        = [False, False, False]
-        
-        self.pos            = self.pos_default
+        self.pos_target     = self.pos_default
         
         # Modifiers for beat response
         self.beatMod = {
@@ -71,18 +71,23 @@ class Action:
         r = aI.arduinoConnect(ARDUINO_ADDRESS, ARDUINO_BAUDRATE)
         if printing: print r
         
-        
-    def stoppingDistance(vCurr):
+    # Arduino-style millis() function for timekeeping
+    millis = lambda: int(round(time.time() * 1000))
+    
+    def currentPosition(self):
+        return aI.getAngles()
+    
+    def stoppingDistance(self, vCurr):
         """
         Calculates the stopping distance based on the velocity given.
         @param double vCurr: velocity to stop from
         """
         
-        d_stop = (-(vCurr * vCurr)) / (2.0 * -a)      # -a because we're stopping
+        d_stop = (-(vCurr * vCurr)) / (2.0 * -self.a)      # -a because we're stopping
         if printing: print "d_stop:" + str(round(d_stop,2)) +"\t",
         return d_stop
     
-    def distanceRemaining(pos, goal):
+    def distanceRemaining(self, pos, goal):
         """
         Function to determine remaining movement distance
         @param pos:  current position
@@ -94,7 +99,7 @@ class Action:
         if printing: print "d_rem:" + str(round(d_rem,2)) +"\t",
         return d_rem
     
-    def determineVmax(pos, goal):
+    def determineVmax(self, pos, goal):
         """
         Determines the relative maximume velocities needed to finish all movement at the same time
         @param list pos: a list of current positions
@@ -103,7 +108,7 @@ class Action:
         
         d_rem = []
         for i in range(len(pos)):
-            d_rem.append(distanceRemaining(pos[i], goal[i]))
+            d_rem.append(self.distanceRemaining(pos[i], goal[i]))
         
         i_max = d_rem.index(max(d_rem))
         if d_rem[i_max] == 0: return
@@ -113,7 +118,7 @@ class Action:
             if not j == i_max:
                 self.vMax[j] = d_rem[j] / d_rem[i_max] / self.maxV
 
-    def determineSpeed(pos, goal, i):
+    def determineSpeed(self, pos, goal, i):
         """
         Function to determine the speed of the joints
         @param list pos: the current joint positions
@@ -125,7 +130,7 @@ class Action:
         
         #if searching: _a = a_search  #TODO: this is a possible improvement for certain actions -> override with a_search >> a
         
-        if distanceRemaining(pos[i], goal[i]) < stoppingDistance(self.vCurr[i]):
+        if self.distanceRemaining(pos[i], goal[i]) < self.stoppingDistance(self.vCurr[i]):
             self.braking[i] = True
         
         if not self.braking[i]:
@@ -135,9 +140,9 @@ class Action:
                 else:
                     self.vCurr[i]+=_a
         else:
-            if self.vCurr[i] > self.vMin:
-                if self.vCurr[i]-_a < self.vMin:
-                    self.vCurr[i] = self.vMin
+            if self.vCurr[i] > self.minV:
+                if self.vCurr[i]-_a < self.minV:
+                    self.vCurr[i] = self.minV
                     if printing: print "minimum speed"
                 else:
                     self.vCurr[i]-=_a
@@ -145,7 +150,7 @@ class Action:
         if printing: print "vCurr:" + str(round(self.vCurr[i],2)) +"\t",
         return self.vCurr[i]
         
-    def done_list(list1, list2):
+    def done_list(self, list1, list2):
         """
         Compare two lists and determine whether their contents are equal
         @param list list1: some list of arbitrary length
@@ -157,7 +162,7 @@ class Action:
         done_count = 0
         
         for i in range(len(list1)):
-            if abs(list1[i] - list2[i]) < self.vMin * 3: #A bit of tolerance is needed to prevent infinite loops
+            if abs(list1[i] - list2[i]) < self.minV * 3: #A bit of tolerance is needed to prevent infinite loops
                 done_count+=1
             
                 
@@ -166,7 +171,7 @@ class Action:
         else:
             return False
             
-    def done(in1, in2):
+    def done(self, in1, in2):
         """
         Compare two inputs, being lists or variables. Must be of the same type or it will return false by default
         @param in1: some input variable
@@ -178,13 +183,13 @@ class Action:
             print type(in1),type(in2)
             return False
         
-        if type(in1) is 'list':
+        if type(in1) is list:
             return  self.done_list(in1, in2)
-        elif abs(in1 - in2) < self.vMin*3:
+        elif abs(in1 - in2) < self.minV*3:
             return True
         return False
         
-    def move(end_pose):
+    def move(self, end_pose):
         """
         Function to change the intended joint positions.
         @param list end_pose: the list of desired end poses
@@ -194,15 +199,15 @@ class Action:
         # modify the end pose with the beat
         # 1 and 3 are opposed, hence + & -
         tar_pose = [end_pose[0], end_pose[1] + (self.beatMod['mod'] * self.beatMod['dir']), \
-                    end_pose[2], end_pose[3] - (self.beatMod['mod'] * self.beatMod['dir'])]
+                                 end_pose[2] - (self.beatMod['mod'] * self.beatMod['dir'])]
         
         if not self.done_list(pos, tar_pose):
             self.determineVmax(pos, tar_pose)
             
             for i in range(len(pos)):
-                if abs(pos[i] - tar_pose[i]) > self.vMin * 5:
+                if abs(pos[i] - tar_pose[i]) > self.minV * 5:
                     #there are some odd issues with the braking triggers not resetting properly
-                    if abs(pos[i] - tar_pose[i]) > self.vMin * 10:
+                    if abs(pos[i] - tar_pose[i]) > self.minV * 10:
                         self.braking[i] = False
                     
                     v = self.determineSpeed(pos, tar_pose, i)
@@ -220,6 +225,12 @@ class Action:
     
     
     def loopCheck(self):
+        """ 
+        Function to check whether the maximum amount of loops has been reached. Also delays execution of the loops if TEST_MODE_SLOW is active. 
+        """
+        
+        if TEST_MODE_SLOW: time.sleep(0.01)
+        
         if self.loops_executed >= self.max_loops:
             self.loops_executed = 0
             return EXIT_CODE_DONE
@@ -243,3 +254,6 @@ class Action:
             return EXIT_CODE_DONE
         print self.loops_executed
         return EXIT_CODE_A1
+    
+    def getUserContactAngles(self):
+        return Action.user_contact_angles

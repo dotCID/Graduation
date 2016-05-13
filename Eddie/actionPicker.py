@@ -19,7 +19,7 @@ from globalVars import CHANNEL_ENERGYDATA
 from globalVars import CHANNEL_TARGETDATA
 from globalVars import CHANNEL_MODE
 from globalVars import MARGIN_USER_CONTACT
-from globalVars import user_contact_angles
+from globalVars import printing
 
 # Exit codes for the actions
 from globalVars import EXIT_CODE_DONE
@@ -31,6 +31,8 @@ from globalVars import EXIT_CODE_FOCUS
 from globalVars import EXIT_CODE_STEVIE
 from globalVars import EXIT_CODE_BORED
 
+
+""" *** Communication Setup *** """
 ## ZMQ Movement Data channel - Provides data on user position
 mv_context = zmq.Context()
 movementChannel = mv_context.socket(zmq.SUB)
@@ -49,7 +51,7 @@ energyChannel.setsockopt(zmq.SUBSCRIBE, '')
 energyChannel.connect(CHANNEL_ENERGYDATA)
 
 energyPoller = zmq.Poller()
-energyPoller.register(movementChannel, zmq.POLLIN)
+energyPoller.register(energyChannel, zmq.POLLIN)
 
 ## ZMQ Target Data channel - Provides data on the last sighting of our tag
 tg_context = zmq.Context()
@@ -102,9 +104,6 @@ energyData   = {
                }
 
 exit_code = EXIT_CODE_DONE
-
-## Debug settings
-printing = True
 
 def randomSelect(chances, modes):
     """
@@ -166,21 +165,23 @@ while True:
     ## Read ZMQ inputs
     if len(movementPoller.poll(0)) is not 0:
         movementData = movementChannel.recv_json()
-
+    
+    user_contact_angles = actions[0].getUserContactAngles()
+    
     ## Check whether the user might contact the bot
-    if ((user_contact_angles['x'] <= movementData['deg_x'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['x'] >= movementData['deg_x'] - MARGIN_USER_CONTACT )) and \
-       ((user_contact_angles['y'] <= movementData['deg_y'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['y'] >= movementData['deg_y'] - MARGIN_USER_CONTACT )) and \
-       ((user_contact_angles['z'] <= movementData['deg_z'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['z'] >= movementData['deg_z'] - MARGIN_USER_CONTACT )):
+    if ((user_contact_angles['deg_x'] <= movementData['deg_x'] + MARGIN_USER_CONTACT ) and \
+        (user_contact_angles['deg_x'] >= movementData['deg_x'] - MARGIN_USER_CONTACT )) and \
+       ((user_contact_angles['deg_y'] <= movementData['deg_y'] + MARGIN_USER_CONTACT ) and \
+        (user_contact_angles['deg_y'] >= movementData['deg_y'] - MARGIN_USER_CONTACT )) and \
+       ((user_contact_angles['deg_z'] <= movementData['deg_z'] + MARGIN_USER_CONTACT ) and \
+        (user_contact_angles['deg_z'] >= movementData['deg_z'] - MARGIN_USER_CONTACT )):
         if printing: print "Possible attention!"
         exit_code = actions[2].execute()
         continue
     
     ## Check whether we need to consult the camera for unexpected contact
-    if (exit_code is not EXIT_CODE_A1) and (exit_code is not EXIT_CODE_A2):
-        if printing: print "Checking camera."
+    if (exit_code is not EXIT_CODE_CONTACT) and (exit_code is not EXIT_CODE_SCAN):
+       # if printing: print "Checking camera."
         
         if len(targetPoller.poll(0)) is not 0:
             targetData = targetChannel.recv_json()
@@ -205,7 +206,7 @@ while True:
             if printing: print "Randomly selected", nextAction
             continue
         elif energyData['eg_label'] == "high":
-            nextAction = randomSelectA()
+            nextAction = randomSelectC()
             exit_code = actions[nextAction].execute()
             if printing: print "Randomly selected", nextAction
             continue
@@ -215,6 +216,6 @@ while True:
             pass
     else:
         # if an Action returns anything other than EXIT_CODE_DONE we follow their advice:
-        if printing: print "Continuing ", exit_code
+       # if printing: print "Continuing ", exit_code
         exit_code = actions[exit_code].execute()
         continue
