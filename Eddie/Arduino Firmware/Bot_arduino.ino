@@ -6,29 +6,24 @@
 
 #define BH_PIN 3
 #define BV_PIN 5
-#define TH_PIN 6
 #define TV_PIN 9
 
-Servo sBH, sBV, sTH, sTV;
-double BH_pos,BV_pos,TH_pos, TV_pos;
+Servo sBH, sBV, sTV;
+double BH_pos,BV_pos, TV_pos;
 bool fullPrint = false;
 bool fullStop = false;
 
 #define BH_MIN 0
 #define BH_MAX 180
-#define BH_DEF 94
+#define BH_DEF 100
 
-#define BV_MIN 90
+#define BV_MIN 0
 #define BV_MAX 180
-#define BV_DEF 155
+#define BV_DEF 75
 
-#define TH_MIN 0
-#define TH_MAX 180
-#define TH_DEF 98
-
-#define TV_MIN 40
+#define TV_MIN 0
 #define TV_MAX 180
-#define TV_DEF 145
+#define TV_DEF 90
 
 #define BEAT_TRESHOLD 10
 
@@ -43,13 +38,11 @@ void setup(){
     Serial.begin(115200);
     sBH.attach(BH_PIN);
     sBV.attach(BV_PIN);
-    sTH.attach(TH_PIN);
     sTV.attach(TV_PIN);
     pinMode(13, OUTPUT);
     
     BH_pos = BH_DEF;
     BV_pos = BV_DEF;
-    TH_pos = TH_DEF;
     TV_pos = TV_DEF;
     
     Serial.println(F("Setup done."));
@@ -103,9 +96,8 @@ void readSerial(){
     }else if(inputString == "home\n"){
         Serial.println(F("Returning to default angles."));
         BH_pos = BH_DEF;
-            BV_pos = BV_DEF;
-            TH_pos = TH_DEF;
-            TV_pos = TV_DEF;
+        BV_pos = BV_DEF;
+        TV_pos = TV_DEF;
     }else if(inputString == "on\n"){
       Serial.println(F("LED on"));
         digitalWrite(13,HIGH);
@@ -126,13 +118,6 @@ void readSerial(){
       if(BV_pos>BV_MAX) BV_pos = BV_MAX;
       
       if(fullPrint) Serial.print(F("BV_pos is now "));Serial.println(BV_pos);
-    }if(inputString.startsWith("TH")){
-      String val = inputString.substring(3,inputString.length());
-      TH_pos = val.toFloat();
-      if(TH_pos<TH_MIN) TH_pos = TH_MIN;
-      if(TH_pos>TH_MAX) TH_pos = TH_MAX;
-      
-      if(fullPrint) Serial.print(F("TH_pos is now "));Serial.println(TH_pos);
     }if(inputString.startsWith("TV")){
       String val = inputString.substring(3,inputString.length());
       TV_pos = val.toFloat();
@@ -155,7 +140,6 @@ void runMotors(){
     if(!fullStop){
         if((BH_pos >= BH_MIN) && (BH_pos <= BH_MAX))  sBH.write(BH_pos);
         if((BV_pos >= BV_MIN) && (BV_pos <= BV_MAX))  sBV.write(BV_pos);
-        if((TH_pos >= TH_MIN) && (TH_pos <= TH_MAX))  sTH.write(TH_pos);
         if((TV_pos >= TV_MIN) && (TV_pos <= TV_MAX))  sTV.write(TV_pos);
     }else{
         //Serial.print(F("All motion is currently stopped. Please send \"start\" to start moving."));
