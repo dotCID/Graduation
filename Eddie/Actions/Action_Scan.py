@@ -1,6 +1,6 @@
 #!/user/bin/python
 """
-Placeholder specific Action class.
+An action where the robot scans its surroundings for eye contact.
 """
 
 import random
