@@ -2,6 +2,10 @@
 '''
 A simple script to provide some dummy data for testing purposes
 '''
+# make it possible to import from parent directory:
+import sys
+sys.path.insert(0,'..')
+
 import zmq, json, random, time
 
 from globalVars import CHANNEL_TARGETDATA
@@ -63,6 +67,7 @@ while True:
                     'tar_px'  : {'x':tar_x, 'y':tar_y},
                     'tar_dg'  : {'x':deg_x, 'y':deg_y}
                    }
+    print tg_message
     tg_socket.send_json(tg_message)
     
     ## CHANNEL_MOVEMENTDATA
@@ -72,6 +77,7 @@ while True:
                     'deg_y'   : random.uniform(0.0, 360.0),
                     'deg_z'   : random.uniform(0.0, 360.0)
                     }
+    print md_message
     md_socket.send_json(md_message)
     
     ## CHANNEL_ENERGYDATA
@@ -85,7 +91,8 @@ while True:
                     'energy'   : energy,
                     'eg_label' : eg_label
                    }
-    eg_socket.send_json(ed_message)
+    print ed_message
+    ed_socket.send_json(ed_message)
     
     ## CHANNEL_MODE
     mode = "A"
@@ -95,10 +102,11 @@ while True:
                     't'   : millis(),
                     'mode': mode
                    }
+    print mode_message
     mode_socket.send_json(mode_message)
     
     ## CHANNEL_BPM
-    if millis() - bpm_last_changed > bpm_change_per:
+    if millis() - bpm_last_change > bpm_change_per:
         bpm = bpm + random.randrange(-10, 10)
         bpm_last_changed = millis()
 
@@ -106,6 +114,7 @@ while True:
                     't'  : millis(),
                     'bpm': bpm
                   }
+    print bpm_message
     bpm_socket.send_json(bpm_message)
     
-    time.sleep(50)
+    time.sleep(0.5)
