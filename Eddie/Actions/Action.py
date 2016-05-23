@@ -9,6 +9,8 @@ The intention is for all actions that can be selected by the Action Picker to ha
 import time
 import arduinoInterface as aI # This will replace the JointData channel. All subclasses share access to this interface and it contains the current joint data
 
+import zmq
+
 ## Exit codes for the actions
 from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
@@ -25,6 +27,7 @@ from globalVars import BOT_ARDUINO_BAUDRATE as ARDUINO_BAUDRATE
 ## Other
 from globalVars import printing
 from globalVars import TEST_MODE_SLOW
+from globalVars import CHANNEL_MODE
 
 class Action:
     ## Last known user positions. Accessible from subclasses via Action.*
@@ -49,11 +52,12 @@ class Action:
         self.a = 0.015
         self.vMax = [self.maxV, self.maxV, self.maxV]
         self.vCurr= [self.minV, self.minV, self.minV]
+        self.mode = "A"
         
         # Position settings
-        self.pos_default    = ( 94.0, 155.0, 145.0)
-        self.pos_min        = (  0.0,  90.0,  40.0)
-        self.pos_max        = (180.0, 180.0, 180.0)
+        self.pos_default    = ( 94.0,  75.0,  90.0)
+        self.pos_min        = (  0.0,  60.0,   0.0)
+        self.pos_max        = (180.0, 110.0, 180.0)
         self.braking        = [False, False, False]
         self.pos_target     = self.pos_default
         
@@ -70,6 +74,15 @@ class Action:
         # Initialise the Arduino
         r = aI.arduinoConnect(ARDUINO_ADDRESS, ARDUINO_BAUDRATE)
         if printing: print r
+        
+        # Initialise ZMQ MODE channel:
+        md_context = zmq.Context()
+        modeChannel = md_context.socket(zmq.SUB)
+        modeChannel.setsockopt(zmq.CONFLATE, 1 )
+        modeChannel.setsockopt(zmq.SUBSCRIBE, '')
+        modeChannel.connect(CHANNEL_MODE)
+        modePoller = zmq.Poller()
+        modePoller.register(modeChannel, zmq.POLLIN)
         
     # Arduino-style millis() function for timekeeping
     millis = lambda: int(round(time.time() * 1000))
@@ -189,11 +202,40 @@ class Action:
             return True
         return False
         
+    def getMode(self, oldMode):
+        """
+        Function to get the latest mode data from the CHANNEL_MODE. If none available, returns the passed old mode.
+        @param oldMode: previously set mode, f.i. "A"
+        """
+        if len(self.modePoller.poll(0)) is not 0:
+            return self.modeChannel.recv_json()
+        else: return oldMode
+        
+    def adaptToMode(self):
+        """
+        Function to adapt the accelleration and minimum and maximum speeds according to the mode broadcast in the CHANNEL_MODE.
+        """
+        self.mode = self.getMode(self.mode)
+        
+        #TODO: test optimum values for this
+        if mode is "A":
+            self.minV = 0.01
+            self.maxV = 4.00
+            self.a = 0.015
+            self.vMax = [self.maxV, self.maxV, self.maxV]
+        elif mode is "B":
+            self.minV = 0.05
+            self.maxV = 8.00
+            self.a = 0.025
+            self.vMax = [self.maxV, self.maxV, self.maxV]
+        
     def move(self, end_pose):
         """
         Function to change the intended joint positions.
         @param list end_pose: the list of desired end poses
         """
+        self.adaptToMode()
+        
         pos = aI.getAngles() ## This is the new method of getting current joint data
         
         # modify the end pose with the beat
