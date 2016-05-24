@@ -25,10 +25,10 @@ class SpecificAction(Action):
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
+        
+        rd = random.random()
        
-       rd = random.random()
-       
-       if self.done(self.currentPosition(), self.focus_pos_C):
+        if self.done(self.currentPosition(), self.focus_pos_C):
             if rd < 0.33:
                 self.pos_target = focus_pos_C
             elif rd <0.66:
@@ -54,5 +54,5 @@ class SpecificAction(Action):
                 self.pos_target = focus_pos_R
             
         self.move(self.pos_target)
-        
+
         return EXIT_CODE_SELF

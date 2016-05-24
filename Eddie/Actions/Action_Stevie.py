@@ -31,7 +31,7 @@ class SpecificAction(Action):
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
        
-       if self.done(self.currentPosition(), self.drifting_pos_C) or \
+        if self.done(self.currentPosition(), self.drifting_pos_C) or \
           self.done(self.currentPosition(), self.drifting_pos_L) or \
           self.done(self.currentPosition(), self.drifting_pos_R):
            
@@ -48,5 +48,5 @@ class SpecificAction(Action):
                 pos_target[i] += R_extra
             
         self.move(self.pos_target)
-        
+
         return EXIT_CODE_SELF
