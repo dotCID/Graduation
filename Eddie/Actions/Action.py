@@ -207,8 +207,8 @@ class Action:
         Function to get the latest mode data from the CHANNEL_MODE. If none available, returns the passed old mode.
         @param oldMode: previously set mode, f.i. "A"
         """
-        if len(self.modePoller.poll(0)) is not 0:
-            return self.modeChannel.recv_json()
+        if len(Action.modePoller.poll(0)) is not 0:
+            return Action.modeChannel.recv_json()
         else: return oldMode
         
     def adaptToMode(self):
