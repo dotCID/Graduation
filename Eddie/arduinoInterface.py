@@ -2,7 +2,7 @@
 import serial, time
 
 jointNames = ('BH', 'BV', 'TV')
-currAngles = [ 0.0,  0.0,  0.0]
+currAngles = [ 94.0,  75.0,  90.0]
 connected = False
 
 def arduinoConnect(port, baudrate):
@@ -16,8 +16,10 @@ def arduinoConnect(port, baudrate):
         print "Connecting to Arduino on", port
         try:
             arduino = serial.Serial(port, baudrate, timeout=.1)
-            time.sleep(1)
-            response = arduino.readline()
+            response = ""
+            while len(response) < 1: # should prevent starting the rest of the program before the Arduino is ready
+                time.sleep(1)
+                response = arduino.readline()
             connected = True
             return response
         except serial.serialutil.SerialException:
@@ -46,8 +48,7 @@ def moveTo(joint_angles):
     """
     
     global currAngles
-    totalResponse = ""
-    
+    totalResponse = "\n"
     for i in range(len(joint_angles)):
         totalResponse += arduinoWrite(joint_angles[i], i)
         currAngles[i] = joint_angles[i]

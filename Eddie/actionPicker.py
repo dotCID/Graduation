@@ -161,6 +161,7 @@ def randomSelectC():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
+
 while True:
     ## Read ZMQ inputs
     if len(movementPoller.poll(0)) is not 0:
@@ -176,8 +177,8 @@ while True:
        ((user_contact_angles['deg_z'] <= movementData['deg_z'] + MARGIN_USER_CONTACT ) and \
         (user_contact_angles['deg_z'] >= movementData['deg_z'] - MARGIN_USER_CONTACT )):
         if printing: print "Possible attention!"
-        exit_code = actions[2].execute()
-        continue
+        #exit_code = actions[2].execute()
+        #continue
     
     ## Check whether we need to consult the camera for unexpected contact
     if (exit_code is not EXIT_CODE_CONTACT) and (exit_code is not EXIT_CODE_SCAN):
@@ -197,18 +198,18 @@ while True:
         
         if energyData['eg_label'] == "none":
             nextAction = randomSelectA()
-            exit_code = actions[nextAction].execute()
             if printing: print "Randomly selected", nextAction
+            exit_code = actions[nextAction].execute()
             continue
         elif energyData['eg_label'] == "low":
             nextAction = randomSelectB()
-            exit_code = actions[nextAction].execute()
             if printing: print "Randomly selected", nextAction
+            exit_code = actions[nextAction].execute()
             continue
         elif energyData['eg_label'] == "high":
             nextAction = randomSelectC()
-            exit_code = actions[nextAction].execute()
             if printing: print "Randomly selected", nextAction
+            exit_code = actions[nextAction].execute()
             continue
     elif exit_code is EXIT_CODE_ERROR:
         print "Something went very wrong. Entering an infinite loop."
@@ -216,6 +217,7 @@ while True:
             pass
     else:
         # if an Action returns anything other than EXIT_CODE_DONE we follow their advice:
-       # if printing: print "Continuing ", exit_code
+        if printing: print "Continuing ", exit_code
         exit_code = actions[exit_code].execute()
+
         continue

@@ -20,6 +20,7 @@ EXIT_CODE_SELF = EXIT_CODE_CONTACT
 import zmq
 from globalVars import CHANNEL_TARGETDATA
 
+from globalVars import printing
 
 class SpecificAction(Action):
 
@@ -40,17 +41,20 @@ class SpecificAction(Action):
                             'tar_px'  : {'x':0.0, 'y':0.0},
                             'tar_dg'  : {'x':0.0, 'y':0.0}
                         }
+    targetData = targetData_default
     findTime = 0
     deg_x = 0.0
     deg_y = 0.0
+      
     
-    def getTargetData():
+    def getTargetData(self):
         """ Simple function for shorter syntax """
-        if len(targetPoller.poll(0)) is not 0:
-            return targetChannel.recv_json()
-        else: return targetData_default
+        if len(self.targetPoller.poll(0)) is not 0:
+            return self.targetChannel.recv_json()
+        else:
+            return self.targetData
             
-    def execute(self,loops = 50):
+    def execute(self,loops = 500):
         """
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
@@ -59,20 +63,23 @@ class SpecificAction(Action):
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
         
-        targetData = getTargetData()
-        if targetData['found']:
+        self.targetData = self.getTargetData()
+        if self.targetData['found']:
             if printing: print "Action_Contact: Found target. Following."
-            deg_x = targetData['tar_dg']['x'] 
-            deg_y = targetData['tar_dg']['y']
-            findTime = targetData['findTime']
-            pos = currentPosition()
-            newpos = (pos[0] + deg_x, pos[1] - deg_y/2, pos[2] - deg_y)
-            move(newpos)
+            deg_x = self.targetData['tar_dg']['x'] 
+            deg_y = self.targetData['tar_dg']['y']
+            findTime = self.targetData['findTime']
+            
+            print "Action_Contact: adjustment: ", deg_x, deg_y
+            
+            pos = self.currentPosition()
+            newpos = (pos[0] + deg_x, pos[1], pos[2] + deg_y)
+            self.move(newpos)
             return EXIT_CODE_SELF
             
-        elif not done(currentPosition(), Action.contact_joint_positions):
+        elif not self.done(self.currentPosition(), Action.contact_joint_positions):
             if printing: print "Action_Contact: Moving to last known contact position"
-            move(Action.contact_joint_positions)
+            self.move(Action.contact_joint_positions)
             return EXIT_CODE_SELF
             
         else:

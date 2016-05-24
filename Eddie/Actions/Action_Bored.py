@@ -22,6 +22,8 @@ class SpecificAction(Action):
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
+        global bored_pos_C, bored_pos_L, bored_pos_R
+        
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE

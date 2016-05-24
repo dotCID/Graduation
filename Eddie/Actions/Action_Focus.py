@@ -13,15 +13,17 @@ import random
 EXIT_CODE_SELF = EXIT_CODE_FOCUS
 
 class SpecificAction(Action):
-    focus_pos_C = [  90.0, 100.0, 195.0]
-    focus_pos_L = [  85.0, 105.0, 190.0]
-    focus_pos_R = [  95.0,  95.0, 200.0]
+    focus_pos_C = [ 100.0,  20.0,  50.0]
+    focus_pos_L = [  70.0,  30.0,  35.0]
+    focus_pos_R = [ 120.0,  10.0,  25.0]
 
     def execute(self,loops = 50):
         """
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
+        global focus_pos_L, focus_pos_C, focus_pos_R
+        
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE

@@ -19,6 +19,10 @@ import zmq
 from globalVars import CHANNEL_TARGETDATA
 from globalVars import CHANNEL_MOVEMENTDATA
 
+from globalVars import printing
+
+scan_pos_L = [  0.0,  40.0,  30.0]
+scan_pos_R = [180.0,  40.0,  30.0]
 
 class SpecificAction(Action):
     # Target channel:
@@ -36,7 +40,8 @@ class SpecificAction(Action):
     movementChannel.setsockopt(zmq.CONFLATE, 1 )
     movementChannel.setsockopt(zmq.SUBSCRIBE, '')
     movementChannel.connect(CHANNEL_MOVEMENTDATA)
-
+    movementPoller = zmq.Poller()
+    movementPoller.register(movementChannel, zmq.POLLIN)
     
     # Variables
     targetData = {
@@ -56,9 +61,7 @@ class SpecificAction(Action):
                             'deg_y'   : 180.0,
                             'deg_z'   : 180.0
                            }
-                           
-    scan_pos_L = [  0.0, 125.0, 175.0]
-    scan_pos_R = [180.0, 125.0, 175.0]
+    
     
     def getTargetData(self):
         """ Returns either new information or the last known position of the target. """
@@ -78,6 +81,8 @@ class SpecificAction(Action):
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
         
+        global scan_pos_L, scan_pos_R
+        
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
@@ -85,8 +90,8 @@ class SpecificAction(Action):
         targetData = self.getTargetData()
         if targetData['found']:
             if printing: print "Action_Scan: Found target"
-            Action.contact_joint_positions = currentPosition()
-            movementData = getMovementData()
+            Action.contact_joint_positions = self.currentPosition()
+            movementData = self.getMovementData()
             Action.user_contact_angles = movementData
             return EXIT_CODE_CONTACT
         elif self.done(self.currentPosition(), Action.contact_joint_positions):
@@ -95,9 +100,9 @@ class SpecificAction(Action):
                 self.pos_target = scan_pos_L
             else:
                 self.pos_target = scan_pos_R
-        elif self.done(self.currentPosition(), self.scan_pos_L):
+        elif self.done(self.currentPosition(), scan_pos_L):
             self.pos_target = scan_pos_R
-        elif self.done(self.currentPosition(), self.scan_pos_R):
+        elif self.done(self.currentPosition(), scan_pos_R):
             self.pos_target = scan_pos_L
         
         self.move(self.pos_target)

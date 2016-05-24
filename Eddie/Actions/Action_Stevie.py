@@ -27,6 +27,7 @@ class SpecificAction(Action):
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
+        global drifting_pos_C, drifting_pos_L, drifting_pos_R
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
@@ -44,9 +45,9 @@ class SpecificAction(Action):
             else:
                 self.pos_target = drifting_pos_R
             
-            for i in range(len(pos_target)):
-                pos_target[i] += R_extra
-            
+            for i in range(len(self.pos_target)):
+                self.pos_target[i] += R_extra
+        
         self.move(self.pos_target)
-
+        
         return EXIT_CODE_SELF

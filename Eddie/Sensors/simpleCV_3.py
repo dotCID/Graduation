@@ -17,7 +17,7 @@ from globalVars import CAMERA_ID_NUMBER
 
 printing = True
 
-dpx = 0.0725 # approximate amount of degrees per pixel
+dpx = 0.0025 # approximate amount of degrees per pixel for Trust eLight
 
 width = 1920
 height = 1080

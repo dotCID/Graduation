@@ -29,6 +29,8 @@ from globalVars import printing
 from globalVars import TEST_MODE_SLOW
 from globalVars import CHANNEL_MODE
 
+loc_printing = False
+
 class Action:
     ## Last known user positions. Accessible from subclasses via Action.*
     user_contact_angles = {
@@ -37,7 +39,7 @@ class Action:
                             'deg_y' : 0.0,
                             'deg_z' : 0.0
                           }
-    contact_joint_positions     = [ 90.0 , 90.0, 90.0 ]
+    contact_joint_positions     = [ 94.0 , 75.0, 90.0 ]
 
     def __init__(self):
         # Output control
@@ -73,16 +75,16 @@ class Action:
         
         # Initialise the Arduino
         r = aI.arduinoConnect(ARDUINO_ADDRESS, ARDUINO_BAUDRATE)
-        if printing: print r
+        if printing: print "Action: Arduino response:",r
         
         # Initialise ZMQ MODE channel:
-        md_context = zmq.Context()
-        modeChannel = md_context.socket(zmq.SUB)
-        modeChannel.setsockopt(zmq.CONFLATE, 1 )
-        modeChannel.setsockopt(zmq.SUBSCRIBE, '')
-        modeChannel.connect(CHANNEL_MODE)
-        modePoller = zmq.Poller()
-        modePoller.register(modeChannel, zmq.POLLIN)
+        self.md_context = zmq.Context()
+        self.modeChannel = self.md_context.socket(zmq.SUB)
+        self.modeChannel.setsockopt(zmq.CONFLATE, 1 )
+        self.modeChannel.setsockopt(zmq.SUBSCRIBE, '')
+        self.modeChannel.connect(CHANNEL_MODE)
+        self.modePoller = zmq.Poller()
+        self.modePoller.register(self.modeChannel, zmq.POLLIN)
         
     # Arduino-style millis() function for timekeeping
     millis = lambda: int(round(time.time() * 1000))
@@ -97,7 +99,7 @@ class Action:
         """
         
         d_stop = (-(vCurr * vCurr)) / (2.0 * -self.a)      # -a because we're stopping
-        if printing: print "d_stop:" + str(round(d_stop,2)) +"\t",
+        if loc_printing: print "d_stop:" + str(round(d_stop,2)) +"\t",
         return d_stop
     
     def distanceRemaining(self, pos, goal):
@@ -109,7 +111,7 @@ class Action:
         """
         
         d_rem = abs(goal - pos)
-        if printing: print "d_rem:" + str(round(d_rem,2)) +"\t",
+        if loc_printing: print "d_rem:" + str(round(d_rem,2)) +"\t",
         return d_rem
     
     def determineVmax(self, pos, goal):
@@ -160,7 +162,7 @@ class Action:
                 else:
                     self.vCurr[i]-=_a
                         
-        if printing: print "vCurr:" + str(round(self.vCurr[i],2)) +"\t",
+        if loc_printing: print "vCurr:" + str(round(self.vCurr[i],2)) +"\t",
         return self.vCurr[i]
         
     def done_list(self, list1, list2):
@@ -207,8 +209,8 @@ class Action:
         Function to get the latest mode data from the CHANNEL_MODE. If none available, returns the passed old mode.
         @param oldMode: previously set mode, f.i. "A"
         """
-        if len(Action.modePoller.poll(0)) is not 0:
-            return Action.modeChannel.recv_json()
+        if len(self.modePoller.poll(0)) is not 0:
+            return self.modeChannel.recv_json()
         else: return oldMode
         
     def adaptToMode(self):
@@ -218,12 +220,12 @@ class Action:
         self.mode = self.getMode(self.mode)
         
         #TODO: test optimum values for this
-        if mode is "A":
+        if self.mode is "A":
             self.minV = 0.01
             self.maxV = 4.00
             self.a = 0.015
             self.vMax = [self.maxV, self.maxV, self.maxV]
-        elif mode is "B":
+        elif self.mode is "B":
             self.minV = 0.05
             self.maxV = 8.00
             self.a = 0.025
@@ -263,15 +265,17 @@ class Action:
                     self.braking[i] = False
           
             r = aI.moveTo(pos)
-            if printing: print r
-    
+            if printing: print "Action: move: sent:",pos
+            if printing: print "Action: move: response:",r
+        else:
+            print "Action: move: Done moving."
     
     def loopCheck(self):
         """ 
         Function to check whether the maximum amount of loops has been reached. Also delays execution of the loops if TEST_MODE_SLOW is active. 
         """
         
-        if TEST_MODE_SLOW: time.sleep(0.01)
+        #if TEST_MODE_SLOW: time.sleep(0.01)
         
         if self.loops_executed >= self.max_loops:
             self.loops_executed = 0
@@ -281,7 +285,7 @@ class Action:
             return 1
         
     
-    def execute(self,loops = 50):
+    def execute(self,loops = 250):
         """
         This method is intended to be overwritten by the separate Actions, but should always start with
         
