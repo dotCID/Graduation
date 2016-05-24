@@ -25,7 +25,7 @@ class SpecificAction(Action):
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
-git sta
+
         rd = random.random()
 
         if self.done(self.currentPosition(), self.bored_pos_C):
