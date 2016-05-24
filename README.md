@@ -9,4 +9,5 @@ pyserial
 ## Installation of requirements
 If you have pip installed, simply use
 >sudo pip install zmq
+
 >sudo pip install pyserial
