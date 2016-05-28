@@ -11,5 +11,5 @@ scan = Action_Scan.SpecificAction()
 a = Action.Action()
 
 while True:
-    contact.execute()
+    scan.execute()
 

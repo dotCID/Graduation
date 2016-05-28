@@ -45,7 +45,7 @@ millis = lambda: int(round(time.time() * 1000))
 while True:
     arduino_data = ardRead()
     
-    if len(arduino_data) <= 1:
+    if len(arduino_data) <= 5:
         # garbage input
         time.sleep(0.02)
         continue
@@ -61,7 +61,8 @@ while True:
                     't':millis(),
                     'bpm':data[0]
                   }
-                  
+    
         print "Control Box: ",arduino_data
+                  
         energy_socket.send_json(eg_msg)
         bpm_socket.send_json(bpm_msg)
