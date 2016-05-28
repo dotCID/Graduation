@@ -1,0 +1,10 @@
+BugList
+
+actionPicker.py:
+    (line 180): detection if IMU contact angles and response is turned off
+
+Action_Bored:
+    stuck on position_default sometimes
+    
+Action move:
+    interpolation between endpoints might be bugged, cannot tell with weak servos
