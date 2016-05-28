@@ -23,7 +23,8 @@ def arduinoConnect(port, baudrate):
             connected = True
             return response
         except serial.serialutil.SerialException:
-            print "No serial connection on ", port
+            print "No serial connection on ", port, "- quitting execution."
+            quit() # In case this happens, don't attempt to run any more
     else:
         print "Already connected to Arduino on", port
         return ""
@@ -48,11 +49,13 @@ def moveTo(joint_angles):
     """
     
     global currAngles
-    totalResponse = "\n"
+    totalResponse = "<"
     for i in range(len(joint_angles)):
-        totalResponse += arduinoWrite(joint_angles[i], i)
+        totalResponse += arduinoWrite(joint_angles[i], i).strip()
+        totalResponse += ", "
         currAngles[i] = joint_angles[i]
     
+    totalResponse += ">"
     return totalResponse
 
 def getAngles():
