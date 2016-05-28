@@ -50,15 +50,15 @@ class Action:
         
         # Speed settings
         self.minV = 0.01
-        self.maxV = 4.00
-        self.a = 0.015
+        self.maxV = 2.00
+        self.a = 0.0075
         self.vMax = [self.maxV, self.maxV, self.maxV]
         self.vCurr= [self.minV, self.minV, self.minV]
         self.mode = "A"
         
         # Position settings
         self.pos_default    = ( 45.0, 100.0,  90.0)
-        self.pos_min        = (  0.0,  70.0,   0.0)
+        self.pos_min        = (  0.0,  50.0,   0.0)
         self.pos_max        = (180.0, 110.0, 180.0)
         self.braking        = [False, False, False]
         self.pos_target     = list(self.pos_default)
@@ -236,6 +236,8 @@ class Action:
         Function to change the intended joint positions.
         @param list end_pose: the list of desired end poses
         """
+        
+        if printing: print "Action: move: end_pose = ",end_pose
         self.adaptToMode()
         
         pos = aI.getAngles() ## This is the new method of getting current joint data
@@ -258,7 +260,7 @@ class Action:
                     
                     if pos[i] < tar_pose[i] and pos[i]+v < self.pos_max[i]: # Should fix the "looking up infinitely" bug
                         pos[i]+=v
-                    elif pos[i]-v > self.pos_min[i]:
+                    elif pos[i] > tar_pose[i] and pos[i]-v > self.pos_min[i]:
                         pos[i]-=v
                 else:
                     pos[i] = tar_pose[i]
