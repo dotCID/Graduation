@@ -57,11 +57,11 @@ class Action:
         self.mode = "A"
         
         # Position settings
-        self.pos_default    = ( 94.0,  75.0,  90.0)
-        self.pos_min        = (  0.0,  60.0,   0.0)
+        self.pos_default    = ( 45.0, 100.0,  90.0)
+        self.pos_min        = (  0.0,  70.0,   0.0)
         self.pos_max        = (180.0, 110.0, 180.0)
         self.braking        = [False, False, False]
-        self.pos_target     = self.pos_default
+        self.pos_target     = list(self.pos_default)
         
         # Modifiers for beat response
         self.beatMod = {
