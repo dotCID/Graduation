@@ -3,7 +3,7 @@
 An action where the robot scans its surroundings for eye contact.
 """
 
-import random
+import random, time
 from Action import Action
 
 ## Exit codes
@@ -21,8 +21,12 @@ from globalVars import CHANNEL_MOVEMENTDATA
 
 from globalVars import printing
 
-scan_pos_L = [  0.0,  40.0,  30.0]
-scan_pos_R = [180.0,  40.0,  30.0]
+#these are ideal, but without stronger motors they cannot be achieved
+#scan_pos_L = [  0.0,  40.0,  30.0]
+#scan_pos_R = [180.0,  40.0,  30.0]
+
+scan_pos_L = [  0.0, 70.0, 30.0]
+scan_pos_R = [180.0, 70.0, 30.0]
 
 class SpecificAction(Action):
     # Target channel:
@@ -75,7 +79,7 @@ class SpecificAction(Action):
             return self.movementChannel.recv_json()
         else: return self.movementData
     
-    def execute(self,loops = 50):
+    def execute(self,loops = 150):
         """
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
@@ -94,17 +98,20 @@ class SpecificAction(Action):
             movementData = self.getMovementData()
             Action.user_contact_angles = movementData
             return EXIT_CODE_CONTACT
-        elif self.done(self.currentPosition(), Action.contact_joint_positions):
-            rd = random.random()
-            if rd > 0.5:
+        elif self.done(self.currentPosition(), self.pos_target):
+            
+            if self.done(self.pos_target, Action.contact_joint_positions):
+                rd = random.random()
+                if rd > 0.5:
+                    self.pos_target = scan_pos_L
+                else:
+                    self.pos_target = scan_pos_R
+            elif self.done(self.pos_target, scan_pos_L):
+                self.pos_target = scan_pos_R
+            elif self.done(self.pos_target, scan_pos_R):
                 self.pos_target = scan_pos_L
             else:
-                self.pos_target = scan_pos_R
-        elif self.done(self.currentPosition(), scan_pos_L):
-            self.pos_target = scan_pos_R
-        elif self.done(self.currentPosition(), scan_pos_R):
-            self.pos_target = scan_pos_L
-        
+                self.pos_target = scan_pos_L #this is the case if no target has been set other than default, for instance.
         self.move(self.pos_target)
         
         return EXIT_CODE_SELF
