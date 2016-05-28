@@ -32,21 +32,22 @@ class SpecificAction(Action):
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
        
-        if self.done(self.currentPosition(), self.drifting_pos_C) or \
+        ''' if self.done(self.currentPosition(), self.drifting_pos_C) or \
           self.done(self.currentPosition(), self.drifting_pos_L) or \
           self.done(self.currentPosition(), self.drifting_pos_R):
-           
+         '''
+        if self.done(self.currentPosition(), self.pos_target):  
             rd = random.random()
 
             if rd < 0.33:
-                self.pos_target = drifting_pos_C
+                self.pos_target = self.drifting_pos_C
             elif rd <0.66:
-                self.pos_target = drifting_pos_L
+                self.pos_target = self.drifting_pos_L
             else:
-                self.pos_target = drifting_pos_R
+                self.pos_target = self.drifting_pos_R
             
             for i in range(len(self.pos_target)):
-                self.pos_target[i] += R_extra
+                self.pos_target[i] += self.R_extra()
         
         self.move(self.pos_target)
         
