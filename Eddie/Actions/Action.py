@@ -29,6 +29,11 @@ from globalVars import printing
 from globalVars import TEST_MODE_SLOW
 from globalVars import CHANNEL_MODE
 
+## Pose data
+from poses import pos_default
+from poses import pos_min
+from poses import pos_max
+
 loc_printing = False
 
 class Action:
@@ -46,29 +51,25 @@ class Action:
         self.printing = False
         
         # Testing settings
-        self.testDelay = False
+        self.testDelay= False
         
         # Speed settings
-        self.minV = 0.01
-        self.maxV = 2.00
-        self.a = 0.0075
-        self.vMax = [self.maxV, self.maxV, self.maxV]
-        self.vCurr= [self.minV, self.minV, self.minV]
-        self.mode = "A"
-        
-        # Position settings
-        self.pos_default    = ( 45.0, 100.0,  90.0)
-        self.pos_min        = (  0.0,  50.0,   0.0)
-        self.pos_max        = (180.0, 110.0, 180.0)
-        self.braking        = [False, False, False]
-        self.pos_target     = list(self.pos_default)
+        self.minV     = 0.01
+        self.maxV     = 2.00
+        self.a        = 0.0075
+        self.vMax     = [self.maxV, self.maxV, self.maxV]
+        self.vCurr    = [self.minV, self.minV, self.minV]
+        self.mode     = "A"
+        self.braking  = [False, False, False]
         
         # Modifiers for beat response
         self.beatMod = {
                         'mod'   : 10,  # degrees of modification +/-
                         'dir'   : 0    # direction of modification. can be -1 | 0 | 1
                        }
-               
+        # Position
+        self.pos_target     = list(pos_default)
+        
         # Looping variables
         self.loops_executed = 0
         self.max_loops = 0
@@ -258,9 +259,9 @@ class Action:
                     
                     v = self.determineSpeed(pos, tar_pose, i)
                     
-                    if pos[i] < tar_pose[i] and pos[i]+v < self.pos_max[i]: # Should fix the "looking up infinitely" bug
+                    if pos[i] < tar_pose[i] and pos[i]+v < pos_max[i]: # Should fix the "looking up infinitely" bug
                         pos[i]+=v
-                    elif pos[i] > tar_pose[i] and pos[i]-v > self.pos_min[i]:
+                    elif pos[i] > tar_pose[i] and pos[i]-v > pos_min[i]:
                         pos[i]-=v
                 else:
                     pos[i] = tar_pose[i]
@@ -268,7 +269,7 @@ class Action:
           
             r = aI.moveTo(pos)
             if printing: print "Action: move: sent:",pos
-            if printing: print "Action: move: response:",r
+            if printing: print "Action: move: response:",r.strip('\r\n'), "\n"
         else:
             print "Action: move: Done moving."
     

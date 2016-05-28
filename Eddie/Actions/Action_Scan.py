@@ -21,12 +21,9 @@ from globalVars import CHANNEL_MOVEMENTDATA
 
 from globalVars import printing
 
-#these are ideal, but without stronger motors they cannot be achieved
-#scan_pos_L = [  0.0,  40.0,  30.0]
-#scan_pos_R = [180.0,  40.0,  30.0]
-
-scan_pos_L = [  0.0, 70.0, 105.0]
-scan_pos_R = [180.0, 50.0, 125.0]
+## Poses
+from poses import scan_pos_L
+from poses import scan_pos_R
 
 class SpecificAction(Action):    
     # Target channel:
