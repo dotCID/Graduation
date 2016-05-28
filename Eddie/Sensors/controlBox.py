@@ -62,5 +62,6 @@ while True:
                     'bpm':data[0]
                   }
                   
+        print "Control Box: ",arduino_data
         energy_socket.send_json(eg_msg)
         bpm_socket.send_json(bpm_msg)
