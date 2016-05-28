@@ -25,10 +25,10 @@ from globalVars import printing
 #scan_pos_L = [  0.0,  40.0,  30.0]
 #scan_pos_R = [180.0,  40.0,  30.0]
 
-scan_pos_L = [  0.0, 70.0, 30.0]
-scan_pos_R = [180.0, 70.0, 30.0]
+scan_pos_L = [  0.0, 70.0, 105.0]
+scan_pos_R = [180.0, 50.0, 125.0]
 
-class SpecificAction(Action):
+class SpecificAction(Action):    
     # Target channel:
     context = zmq.Context()
     targetChannel = context.socket(zmq.SUB)
@@ -84,6 +84,9 @@ class SpecificAction(Action):
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
+            
+        # the general max speed is a bit high here
+        self.maxV = 1.00
         
         global scan_pos_L, scan_pos_R
         
@@ -107,8 +110,12 @@ class SpecificAction(Action):
                 else:
                     self.pos_target = scan_pos_R
             elif self.done(self.pos_target, scan_pos_L):
+                # hold a bit for more realism
+                time.sleep(0.25)
                 self.pos_target = scan_pos_R
             elif self.done(self.pos_target, scan_pos_R):
+                # hold a bit for more realism
+                time.sleep(0.25)
                 self.pos_target = scan_pos_L
             else:
                 self.pos_target = scan_pos_L #this is the case if no target has been set other than default, for instance.
