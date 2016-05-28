@@ -20,6 +20,7 @@ from globalVars import CHANNEL_TARGETDATA
 from globalVars import CHANNEL_MODE
 from globalVars import MARGIN_USER_CONTACT
 from globalVars import printing
+from globalVars import TEST_MODE_SLOW
 
 # Exit codes for the actions
 from globalVars import EXIT_CODE_DONE
@@ -111,7 +112,7 @@ def randomSelect(chances, modes):
     @param num: the selection number, between 0.0 and 1.0 inclusive
     @param chances: a list of chances for the available actions
     @param modes: the modes to select from
-    @return: the index {1..5} of the next action
+    @return: the return code {1..5} of the next action
     """
     choice = random.random() #note that 1.0 is not possible?
     
@@ -130,7 +131,7 @@ def randomSelect(chances, modes):
 def randomSelectA():
     """
     Selects an action from set A (no energy).
-    @return: the index {1..5} of the next action
+    @return: the return code {2 or 5} of the next action
     """
     chances = (0.0, 0.4, 0.0, 0.0, 0.6)
     modes   = ("0", "B", "0", "0", "B")
@@ -140,7 +141,7 @@ def randomSelectA():
 def randomSelectB():
     """
     Selects an action from set B (low energy).
-    @return: the index {1..5} of the next action
+    @return: the return code {2, 3 or 4} of the next action
     """
     chances = (0.0, 0.3, 0.1, 0.6, 0.0)
     modes   = ("0", "B", "B", "B", "0")
@@ -150,7 +151,7 @@ def randomSelectB():
 def randomSelectC():
     """
     Selects an action from set C (high energy).
-    @return: the index {1..5} of the next action
+    @return: the return code {2 or 3} of the next action
     """
     chances = (0.0, 0.3, 0.7, 0.0, 0.0)
     modes   = ("0", "A", "A", "0", "0")
@@ -200,16 +201,19 @@ while True:
             nextAction = randomSelectA()
             if printing: print "Randomly selected", nextAction
             exit_code = actions[nextAction].execute()
+            if TEST_MODE_SLOW: time.sleep(1)
             continue
         elif energyData['eg_label'] == "low":
             nextAction = randomSelectB()
             if printing: print "Randomly selected", nextAction
             exit_code = actions[nextAction].execute()
+            if TEST_MODE_SLOW: time.sleep(1)
             continue
         elif energyData['eg_label'] == "high":
             nextAction = randomSelectC()
             if printing: print "Randomly selected", nextAction
             exit_code = actions[nextAction].execute()
+            if TEST_MODE_SLOW: time.sleep(1)
             continue
     elif exit_code is EXIT_CODE_ERROR:
         print "Something went very wrong. Entering an infinite loop."
