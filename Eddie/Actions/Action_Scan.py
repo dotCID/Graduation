@@ -40,7 +40,7 @@ class SpecificAction(Action):
     movementChannel = mv_context.socket(zmq.SUB)
     movementChannel.setsockopt(zmq.CONFLATE, 1 )
     movementChannel.setsockopt(zmq.SUBSCRIBE, '')
-    movementChannel.connect(CHANNEL_MOVEMENTDATA)
+    movementChannel.connect(CHANNEL_IMU_RAWPOS)
     movementPoller = zmq.Poller()
     movementPoller.register(movementChannel, zmq.POLLIN)
     
