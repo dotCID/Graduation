@@ -40,9 +40,9 @@ class Action:
     ## Last known user positions. Accessible from subclasses via Action.*
     user_contact_angles = {
                             't' : 0,
-                            'deg_x' : 0.0,
-                            'deg_y' : 0.0,
-                            'deg_z' : 0.0
+                            'deg_x' : 350.0,
+                            'deg_y' : 5.0,
+                            'deg_z' : -180.0
                           }
     contact_joint_positions     = [ 94.0 , 75.0, 90.0 ]
 
