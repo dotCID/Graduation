@@ -5,3 +5,11 @@ actionPicker.py:
     
 Action move:
     interpolation between endpoints might be bugged, cannot tell with weak servos
+    
+completely no implementation of musician position/viewing angle yet
+
+beatDetect.py:
+    BPM cannot drop to 0 - not sure if this will be an issue during actual use
+    
+beatDetect2.py:
+    Solved above issue but at the cost of accuracy (a lot of it)
