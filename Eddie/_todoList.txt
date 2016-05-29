@@ -1,0 +1,17 @@
+Priorities for concert
+--------------------------
+
+1. User contact
+    - user angles are output in ZMQ
+    - needs interpretation and remembering
+        - Interpretation: check
+
+    - user contact margin needs tuning
+    
+2. Motions
+    - mostly done
+    - percentages need tuning
+    
+3. Beat motions
+
+4. Beat increase/decrease
