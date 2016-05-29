@@ -82,7 +82,7 @@ while True:
                     't' : millis(),
                     'x' : float(pos_data[0]),
                     'y' : float(pos_data[1]),
-                    'z' : float(pos_data[2)]
+                    'z' : float(pos_data[2])
                   }
         
         print "pos_msg = ", pos_msg
