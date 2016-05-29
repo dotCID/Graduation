@@ -3,7 +3,7 @@
 This script picks and executes Actions based on external inputs and a RNG. This is an infinitely looping script.
 '''
 
-import zmq, time, math, random
+import zmq, time, math, random, sys
 
 ## Actions
 from Actions import Action
@@ -32,6 +32,8 @@ from globalVars import EXIT_CODE_FOCUS
 from globalVars import EXIT_CODE_STEVIE
 from globalVars import EXIT_CODE_BORED
 
+## Change terminal window header for easier identification of contents
+sys.stdout.write("\x1b]2;actionPicker.py\x07")
 
 """ *** Communication Setup *** """
 ## ZMQ Raw orientation channel - Provides data on user orientation
@@ -87,9 +89,9 @@ millis = lambda: int(round(time.time() * 1000))
 ## Variables
 orientationData = {
                 't'       : millis(),
-                'deg_x'   : 180.0,
-                'deg_y'   : 180.0,
-                'deg_z'   : 180.0
+                'x'   : 180.0,
+                'y'   : 180.0,
+                'z'   : 180.0
                }
 targetData   = {
                 't'       : millis(),
@@ -170,16 +172,18 @@ while True:
     
     user_contact_angles = actions[0].getUserContactAngles()
     
-    ## Check whether the user might contact the bot
-    if ((user_contact_angles['deg_x'] <= orientationData['deg_x'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['deg_x'] >= orientationData['deg_x'] - MARGIN_USER_CONTACT )) and \
-       ((user_contact_angles['deg_y'] <= orientationData['deg_y'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['deg_y'] >= orientationData['deg_y'] - MARGIN_USER_CONTACT )) and \
-       ((user_contact_angles['deg_z'] <= orientationData['deg_z'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['deg_z'] >= orientationData['deg_z'] - MARGIN_USER_CONTACT )):
-        if printing: print "Possible attention!"
-        #exit_code = actions[2].execute()
-        #continue
+    ## Check whether the user might contact the bot and whether we're not already making contact
+    if ((user_contact_angles['deg_x'] <= orientationData['x'] + MARGIN_USER_CONTACT )  and \
+        (user_contact_angles['deg_x'] >= orientationData['x'] - MARGIN_USER_CONTACT )) and \
+       ((user_contact_angles['deg_y'] <= orientationData['y'] + MARGIN_USER_CONTACT )  and \
+        (user_contact_angles['deg_y'] >= orientationData['y'] - MARGIN_USER_CONTACT )) and \
+       ((user_contact_angles['deg_z'] <= orientationData['z'] + MARGIN_USER_CONTACT )  and \
+        (user_contact_angles['deg_z'] >= orientationData['z'] - MARGIN_USER_CONTACT )) and \
+        exit_code != 1 and exit_code != 2:
+        if printing: print "Possible attention!", exit_code
+        time.sleep(3)
+        exit_code = actions[2].execute()
+        continue
     
     ## Check whether we need to consult the camera for unexpected contact
     if (exit_code is not EXIT_CODE_CONTACT) and (exit_code is not EXIT_CODE_SCAN):
