@@ -17,7 +17,7 @@ EXIT_CODE_SELF = EXIT_CODE_SCAN
 ## zmq
 import zmq
 from globalVars import CHANNEL_TARGETDATA
-from globalVars import CHANNEL_MOVEMENTDATA
+from globalVars import CHANNEL_IMU_RAWPOS
 
 from globalVars import printing
 

@@ -14,7 +14,7 @@ from Actions import Action_Stevie
 from Actions import Action_Bored
 
 ## Global Variables
-from globalVars import CHANNEL_MOVEMENTDATA
+from globalVars import CHANNEL_IMU_RAWPOS
 from globalVars import CHANNEL_ENERGYDATA
 from globalVars import CHANNEL_TARGETDATA
 from globalVars import CHANNEL_MODE
@@ -34,15 +34,15 @@ from globalVars import EXIT_CODE_BORED
 
 
 """ *** Communication Setup *** """
-## ZMQ Movement Data channel - Provides data on user position
+## ZMQ Raw orientation channel - Provides data on user orientation
 mv_context = zmq.Context()
-movementChannel = mv_context.socket(zmq.SUB)
-movementChannel.setsockopt(zmq.CONFLATE, 1 ) # this tells the subscriber to only get the last message sent since the publisher is probably faster
-movementChannel.setsockopt(zmq.SUBSCRIBE, '')
-movementChannel.connect(CHANNEL_MOVEMENTDATA)
+orientationChannel = mv_context.socket(zmq.SUB)
+orientationChannel.setsockopt(zmq.CONFLATE, 1 ) # this tells the subscriber to only get the last message sent since the publisher is probably faster
+orientationChannel.setsockopt(zmq.SUBSCRIBE, '')
+orientationChannel.connect(CHANNEL_IMU_RAWPOS)
 
-movementPoller = zmq.Poller()
-movementPoller.register(movementChannel, zmq.POLLIN)
+orientationPoller = zmq.Poller()
+orientationPoller.register(orientationChannel, zmq.POLLIN)
 
 ## ZMQ Energy Data channel - Provides data on music energy
 eg_context = zmq.Context()
@@ -85,7 +85,7 @@ actions = [
 millis = lambda: int(round(time.time() * 1000))
 
 ## Variables
-movementData = {
+orientationData = {
                 't'       : millis(),
                 'deg_x'   : 180.0,
                 'deg_y'   : 180.0,
@@ -165,18 +165,18 @@ def randomSelectC():
 
 while True:
     ## Read ZMQ inputs
-    if len(movementPoller.poll(0)) is not 0:
-        movementData = movementChannel.recv_json()
+    if len(orientationPoller.poll(0)) is not 0:
+        orientationData = orientationChannel.recv_json()
     
     user_contact_angles = actions[0].getUserContactAngles()
     
     ## Check whether the user might contact the bot
-    if ((user_contact_angles['deg_x'] <= movementData['deg_x'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['deg_x'] >= movementData['deg_x'] - MARGIN_USER_CONTACT )) and \
-       ((user_contact_angles['deg_y'] <= movementData['deg_y'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['deg_y'] >= movementData['deg_y'] - MARGIN_USER_CONTACT )) and \
-       ((user_contact_angles['deg_z'] <= movementData['deg_z'] + MARGIN_USER_CONTACT ) and \
-        (user_contact_angles['deg_z'] >= movementData['deg_z'] - MARGIN_USER_CONTACT )):
+    if ((user_contact_angles['deg_x'] <= orientationData['deg_x'] + MARGIN_USER_CONTACT ) and \
+        (user_contact_angles['deg_x'] >= orientationData['deg_x'] - MARGIN_USER_CONTACT )) and \
+       ((user_contact_angles['deg_y'] <= orientationData['deg_y'] + MARGIN_USER_CONTACT ) and \
+        (user_contact_angles['deg_y'] >= orientationData['deg_y'] - MARGIN_USER_CONTACT )) and \
+       ((user_contact_angles['deg_z'] <= orientationData['deg_z'] + MARGIN_USER_CONTACT ) and \
+        (user_contact_angles['deg_z'] >= orientationData['deg_z'] - MARGIN_USER_CONTACT )):
         if printing: print "Possible attention!"
         #exit_code = actions[2].execute()
         #continue
