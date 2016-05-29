@@ -33,7 +33,7 @@
    */
 
 /* Set the delay between fresh samples */
-#define BNO055_SAMPLERATE_DELAY_MS (100)
+#define BNO055_SAMPLERATE_DELAY_MS (50)
 
 Adafruit_BNO055 bno = Adafruit_BNO055(55);
 
@@ -154,16 +154,29 @@ void setup(void)
 }
 
 void loop() {
+    /* Accellerometer data for BPM calculation etc. */
     imu::Vector<3> euler = bno.getVector(Adafruit_BNO055::VECTOR_ACCELEROMETER);
 
-    /* Display the floating point data */
-    Serial.print(">");
+    Serial.print(F(">"));
     Serial.print(euler.x());
-    Serial.print(",");
+    Serial.print(F(","));
     Serial.print(euler.y());
-    Serial.print(",");
+    Serial.print(F(","));
     Serial.print(euler.z());
-    Serial.print("\n");
+    Serial.println(F("\n"));
+    
+    
+    /* Orientation data for user position estimation */
+    sensors_event_t event;
+    bno.getEvent(&event);
+    
+    Serial.print(F("["));
+    Serial.print((float)event.orientation.x);
+    Serial.print(F(","));
+    Serial.print((float)event.orientation.y);
+    Serial.print(F(","));
+    Serial.print((float)event.orientation.z);
+    Serial.println(F("\n"));
     
     delay(BNO055_SAMPLERATE_DELAY_MS);
 }
