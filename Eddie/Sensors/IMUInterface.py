@@ -64,9 +64,9 @@ while True:
         
         acc_msg = {
                     't' : millis(),
-                    'x' : acc_data[0],
-                    'y' : acc_data[1],
-                    'z' : acc_data[2]
+                    'x' : float(acc_data[0]),
+                    'y' : float(acc_data[1]),
+                    'z' : float(acc_data[2])
                   }
         
         print "acc_msg = ", acc_msg
@@ -80,9 +80,9 @@ while True:
         
         pos_msg = {
                     't' : millis(),
-                    'x' : pos_data[0],
-                    'y' : pos_data[1],
-                    'z' : pos_data[2]
+                    'x' : float(pos_data[0]),
+                    'y' : float(pos_data[1]),
+                    'z' : float(pos_data[2)]
                   }
         
         print "pos_msg = ", pos_msg
