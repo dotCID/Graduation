@@ -14,6 +14,8 @@ from globalVars import CHANNEL_IMU_RAWPOS
 from globalVars import IMU_ARDUINO_ADDRESS
 from globalVars import IMU_ARDUINO_BAUDRATE
 
+## Change terminal window header for easier identification of contents
+sys.stdout.write("\x1b]2;Sensors/IMUInterface.py\x07")
 
 ## ZMQ setup
 a_context = zmq.Context()
@@ -39,7 +41,6 @@ def ardRead():
     
 ## Arduino-style millis() function for timekeeping
 millis = lambda: int(round(time.time() * 1000))
-
 
 while True:    
     arduino_data = ardRead()
@@ -69,7 +70,7 @@ while True:
                     'z' : float(acc_data[2])
                   }
         
-        print "acc_msg = ", acc_msg
+        print "acc_msg = ", acc_msg, "\t",
         rawaccel.send_json(acc_msg)
         
     elif arduino_data[0] == "[":
