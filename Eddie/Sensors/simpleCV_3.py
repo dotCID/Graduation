@@ -9,6 +9,10 @@ Attempted stabilisation of the output by tracking a circular object instead and 
 import sys
 sys.path.insert(0,'..')
 
+## Change terminal window header for easier identification of contents
+sys.stdout.write("\x1b]2;Sensors/simplceCV_3.py\x07")
+
+
 import time, math, SimpleCV
 import zmq, json
 import subprocess as sp
