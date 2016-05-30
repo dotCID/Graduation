@@ -1,15 +1,14 @@
 BugList
 
-actionPicker.py:
-    (line 180): detection if IMU contact angles and response is turned off
-    
-Action move:
+#1 Action move:
     interpolation between endpoints might be bugged, cannot tell with weak servos
+    -> looks to be the jitter bug (# 4)
     
-completely no implementation of musician position/viewing angle yet
 
-beatDetect.py:
+#2 beatDetect.py:
     BPM cannot drop to 0 - not sure if this will be an issue during actual use
     
-beatDetect2.py:
+#3 beatDetect2.py:
     Solved above issue but at the cost of accuracy (a lot of it)
+    
+#4 Servo 1 (BV) (Hig Power) moves rather jittery. Unknown cause.
