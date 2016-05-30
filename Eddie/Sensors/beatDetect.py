@@ -31,6 +31,10 @@
 import sys
 sys.path.insert(0,'..')
 
+
+# MCW: Change terminal window header for easier identification of contents
+sys.stdout.write("\x1b]2;Sensors/beatDetect.py\x07")
+
 import sys
 import numpy
 import numpy.linalg
