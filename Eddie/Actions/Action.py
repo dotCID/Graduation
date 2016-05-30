@@ -40,9 +40,9 @@ class Action:
     ## Last known user positions. Accessible from subclasses via Action.*
     user_contact_angles = {
                             't' : 0,
-                            'deg_x' : 350.0,
-                            'deg_y' : 5.0,
-                            'deg_z' : -180.0
+                            'x' : 350.0,
+                            'y' : 5.0,
+                            'z' : -180.0
                           }
     contact_joint_positions     = [ 94.0 , 75.0, 90.0 ]
 
@@ -164,6 +164,10 @@ class Action:
                     self.vCurr[i]-=_a
                         
         if loc_printing: print "vCurr:" + str(round(self.vCurr[i],2)) +"\t",
+        
+        # Due to some bug, it appears that the minimum difference in angles for the bottom vertical (BV) servo is 0.01
+        if i == 1:
+            round(self.vCurr[i], 1)
         return self.vCurr[i]
         
     def done_list(self, list1, list2):
@@ -266,7 +270,8 @@ class Action:
                 else:
                     pos[i] = tar_pose[i]
                     self.braking[i] = False
-          
+            
+            
             r = aI.moveTo(pos)
             if printing: print "Action: move: sent:",pos
             if printing: print "Action: move: response:",r.strip('\r\n'), "\n"
