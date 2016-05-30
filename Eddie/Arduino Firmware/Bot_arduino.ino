@@ -5,7 +5,7 @@
 #include <Servo.h>
 
 #define BH_PIN 3
-#define BV_PIN 5
+#define BV_PIN 11
 #define TV_PIN 9
 
 Servo sBH, sBV, sTV;
@@ -51,17 +51,6 @@ void setup(){
 void loop(){
     readSerial();
     runMotors();
-
-    if(beat && millis()-beatTime > 10){
-            digitalWrite(13, LOW); 
-            beat = false; 
-    }
-    if(beat){ 
-        beatTime = millis();
-        digitalWrite(13, HIGH); 
-    }
-   
-    
 }
 
 /*
@@ -78,7 +67,7 @@ void loop(){
   TV #.#
 */
 void readSerial(){
-    while (Serial.available()) {
+  while (Serial.available()) {
     char inChar = (char)Serial.read(); 
     inputString += inChar;
     if (inChar == '\n') {
