@@ -173,12 +173,12 @@ while True:
     user_contact_angles = actions[0].getUserContactAngles()
     
     ## Check whether the user might contact the bot and whether we're not already making contact
-    if ((user_contact_angles['deg_x'] <= orientationData['x'] + MARGIN_USER_CONTACT )  and \
-        (user_contact_angles['deg_x'] >= orientationData['x'] - MARGIN_USER_CONTACT )) and \
-       ((user_contact_angles['deg_y'] <= orientationData['y'] + MARGIN_USER_CONTACT )  and \
-        (user_contact_angles['deg_y'] >= orientationData['y'] - MARGIN_USER_CONTACT )) and \
-       ((user_contact_angles['deg_z'] <= orientationData['z'] + MARGIN_USER_CONTACT )  and \
-        (user_contact_angles['deg_z'] >= orientationData['z'] - MARGIN_USER_CONTACT )) and \
+    if ((user_contact_angles['x'] <= orientationData['x'] + MARGIN_USER_CONTACT )  and \
+        (user_contact_angles['x'] >= orientationData['x'] - MARGIN_USER_CONTACT )) and \
+       ((user_contact_angles['y'] <= orientationData['y'] + MARGIN_USER_CONTACT )  and \
+        (user_contact_angles['y'] >= orientationData['y'] - MARGIN_USER_CONTACT )) and \
+       ((user_contact_angles['z'] <= orientationData['z'] + MARGIN_USER_CONTACT )  and \
+        (user_contact_angles['z'] >= orientationData['z'] - MARGIN_USER_CONTACT )) and \
         exit_code != 1 and exit_code != 2:
         if printing: print "Possible attention!", exit_code
         time.sleep(3)
@@ -204,19 +204,19 @@ while True:
         if energyData['eg_label'] == "none":
             nextAction = randomSelectA()
             if printing: print "Randomly selected", nextAction
-            exit_code = actions[nextAction].execute()
+            exit_code = actions[nextAction].execute(150)
             if TEST_MODE_SLOW: time.sleep(1)
             continue
         elif energyData['eg_label'] == "low":
             nextAction = randomSelectB()
             if printing: print "Randomly selected", nextAction
-            exit_code = actions[nextAction].execute()
+            exit_code = actions[nextAction].execute(150)
             if TEST_MODE_SLOW: time.sleep(1)
             continue
         elif energyData['eg_label'] == "high":
             nextAction = randomSelectC()
             if printing: print "Randomly selected", nextAction
-            exit_code = actions[nextAction].execute()
+            exit_code = actions[nextAction].execute(150)
             if TEST_MODE_SLOW: time.sleep(1)
             continue
     elif exit_code is EXIT_CODE_ERROR:
@@ -226,6 +226,6 @@ while True:
     else:
         # if an Action returns anything other than EXIT_CODE_DONE we follow their advice:
         if printing: print "Continuing ", exit_code
-        exit_code = actions[exit_code].execute()
+        exit_code = actions[exit_code].execute(150)
 
         continue
