@@ -42,4 +42,4 @@ MARGIN_USER_CONTACT = 30.0
 
 ## Debug values
 printing  = True
-TEST_MODE_SLOW = True
+TEST_MODE_SLOW = False
