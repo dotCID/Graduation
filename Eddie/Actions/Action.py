@@ -235,7 +235,13 @@ class Action:
             self.maxV = 8.00
             self.a = 0.025
             self.vMax = [self.maxV, self.maxV, self.maxV]
-        
+    
+    def calcBeatMod(self):
+        """
+        Calculates what direction to move in and how much, depending on data from the beatData channel.
+        """
+        #TODO: implementation
+    
     def move(self, end_pose):
         """
         Function to change the intended joint positions.
