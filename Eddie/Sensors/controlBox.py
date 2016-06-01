@@ -14,6 +14,9 @@ from globalVars import CHANNEL_BPM
 import serial, time
 import zmq
 
+## Change terminal window header for easier identification of contents
+sys.stdout.write("\x1b]2;Sensors/controlBox.py\x07")
+
 
 ## Arduino setup
 box_arduino = serial.Serial(CONTROLBOX_ARDUINO_ADDRESS, CONTROLBOX_ARDUINO_BAUDRATE, timeout=.1)
