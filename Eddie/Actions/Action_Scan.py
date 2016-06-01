@@ -58,9 +58,9 @@ class SpecificAction(Action):
     
     movementData = {
                             't'       : 0,
-                            'deg_x'   : 180.0,
-                            'deg_y'   : 180.0,
-                            'deg_z'   : 180.0
+                            'x'   : 180.0,
+                            'y'   : 180.0,
+                            'z'   : 180.0
                            }
     
     
