@@ -1,6 +1,8 @@
 Priorities for concert
 --------------------------
 
+0. More robust sensor casings
+
 1. User contact
     - user angles are output in ZMQ
     - needs interpretation and remembering
