@@ -66,8 +66,8 @@ class SpecificAction(Action):
         self.targetData = self.getTargetData()
         if self.targetData['found']:
             if printing: print "Action_Contact: Found target. Following."
-            deg_x = self.targetData['tar_dg']['x'] 
-            deg_y = self.targetData['tar_dg']['y']
+            deg_x = -self.targetData['tar_dg']['x'] 
+            deg_y = -self.targetData['tar_dg']['y']
             findTime = self.targetData['findTime']
             
             print "Action_Contact: adjustment: ", deg_x, deg_y
