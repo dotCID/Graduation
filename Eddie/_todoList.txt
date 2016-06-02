@@ -1,19 +1,20 @@
 Priorities for concert
 --------------------------
 
-0. More robust sensor casings
+1. Fully test system
+    - fix any remaining bugs
 
-1. User contact
-    - user angles are output in ZMQ
-    - needs interpretation and remembering
-        - Interpretation: check
+2. Create vent hole for PSU
+    Possibly with fan
 
-    - user contact margin needs tuning
-    
-2. Motions
-    - mostly done
-    - percentages need tuning
-    
-3. Beat motions
+3. Paint casing top black
 
-4. Beat increase/decrease
+4. Write things on the questionnaire box
+
+
+Setup at concert
+--------------------------
+
+1. Calibration of IMU on stage
+
+2. Tape robot to table
