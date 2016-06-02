@@ -38,7 +38,7 @@ while True:
         exit_code = bored.execute(150)
         
 """
-
+"""
 aI.arduinoConnect("/dev/ttyUSB0", 115200)
 angles = aI.getAngles()
 
@@ -56,4 +56,7 @@ while True:
     elif a < 0:
         a_dir = 1
     time.sleep(0.005)
-
+"""
+scan        = Action_Scan.SpecificAction()
+while True:
+    scan.execute(150)
