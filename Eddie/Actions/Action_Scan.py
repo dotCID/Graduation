@@ -25,6 +25,9 @@ from globalVars import printing
 from poses import scan_pos_L
 from poses import scan_pos_R
 
+millis = lambda: int(round(time.time() * 1000))
+
+
 class SpecificAction(Action):    
     # Target channel:
     context = zmq.Context()
@@ -64,8 +67,11 @@ class SpecificAction(Action):
                            }
     
     
+    tried_last_loc = True
+    
     def getTargetData(self):
         """ Returns either new information or the last known position of the target. """
+        global targetData
         if len(self.targetPoller.poll(0)) is not 0:
             return self.targetChannel.recv_json()
         else: return self.targetData
@@ -81,7 +87,7 @@ class SpecificAction(Action):
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
-            
+        global targetData
         # the general max speed is a bit high here
         self.maxV = 1.00
         
@@ -93,13 +99,23 @@ class SpecificAction(Action):
             
         targetData = self.getTargetData()
         if targetData['found']:
-            if printing: print "Action_Scan: Found target"
+            print "Action_Scan: Found target"
             Action.contact_joint_positions = self.currentPosition()
             movementData = self.getMovementData()
             Action.user_contact_angles = movementData
+            self.tried_last_loc = False
             return EXIT_CODE_CONTACT
         elif self.done(self.currentPosition(), self.pos_target):
-            
+            if not self.tried_last_loc:
+                print "trying last location"
+                print targetData['tar_px']
+                if targetData['tar_px']['x'] > 0:
+                    self.pos_target = scan_pos_R
+                    print "Target was to my right"
+                elif targetData['tar_px']['x']<0:
+                    self.pos_target = scan_pos_L
+                    print "Target was to my left"
+                self.tried_last_loc = True
             if self.done(self.pos_target, Action.contact_joint_positions):
                 rd = random.random()
                 if rd > 0.5:
@@ -107,12 +123,8 @@ class SpecificAction(Action):
                 else:
                     self.pos_target = scan_pos_R
             elif self.done(self.pos_target, scan_pos_L):
-                # hold a bit for more realism
-                time.sleep(0.25)
                 self.pos_target = scan_pos_R
             elif self.done(self.pos_target, scan_pos_R):
-                # hold a bit for more realism
-                time.sleep(0.25)
                 self.pos_target = scan_pos_L
             else:
                 self.pos_target = scan_pos_L #this is the case if no target has been set other than default, for instance.
