@@ -137,11 +137,15 @@ while display.isNotDone():
                         'tar_px'  : {'x':tar_x, 'y':tar_y},
                         'tar_dg'  : {'x':deg_x, 'y':deg_y}
                     }
-        
+        # wait 20 ms to make sure Scan picks up on the last hit
+        if not found and millis() - findTime < 100:
+            continue
         socket.send_json(message)
+        
         print "Sent targetData: ",
         print message
                         
         if lastFound == findTime:
-            lossReported = True
+            lossReported = False
+            #spam to keep data flowing
 
