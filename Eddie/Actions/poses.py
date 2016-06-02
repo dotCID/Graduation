@@ -4,7 +4,7 @@ This file is a database of all poses Eddie uses. Consolidated into one file for 
 
 
 ## Defaults
-pos_default    = (105.0, 110.0, 125.0)
+pos_default    = (105.0, 130.0,  75.0)
 pos_min        = ( 10.0,  10.0,  20.0)
 pos_max        = (170.0, 160.0, 160.0)
 
@@ -12,7 +12,7 @@ pos_max        = (170.0, 160.0, 160.0)
 
 ## Action 2: Scan
 scan_pos_L = [ 10.0, 110.0, 135.0]
-scan_pos_R = [170.0,  90.0, 110.0]
+scan_pos_R = [170.0,  90.0, 145.0]
 
 ## Action 3: Focus
 focus_pos_C = [ 105.0,  80.0, 130.0]
@@ -27,4 +27,4 @@ drifting_pos_R = [  95.0, 120.0,  70.0]
 ## Action 5: Bored
 bored_pos_C = [  85.0, 160.0,  50.0]
 bored_pos_L = [  25.0, 160.0,  60.0]
-bored_pos_R = [ 165.0, 160.0,  30.0]
+bored_pos_R = [ 165.0, 160.0,  50.0]
