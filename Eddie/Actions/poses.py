@@ -8,11 +8,14 @@ pos_default    = (105.0, 130.0,  75.0)
 pos_min        = ( 10.0,  10.0,  20.0)
 pos_max        = (170.0, 160.0, 160.0)
 
+## For playing dead
+pos_dead       = (170, 30, 75 )
+
 ## Action 1: Contact
 
 ## Action 2: Scan
 scan_pos_L = [ 10.0, 110.0, 135.0]
-scan_pos_R = [170.0,  90.0, 145.0]
+scan_pos_R = [105.0,  90.0, 145.0]
 
 ## Action 3: Focus
 focus_pos_C = [ 105.0,  80.0, 130.0]
