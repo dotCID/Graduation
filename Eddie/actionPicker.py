@@ -164,20 +164,35 @@ def randomSelectC():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
-not_started = True
+waiting = True
+dead = False
 
 while True:
     if exit_code == -1:
         ## Start in user input mode at default position
-        while not_started:
+        while waiting:
             e = actions[0].execute(150)
             if e == 0:
-                not_started = False
+                waiting = False
         
-        var = raw_input("Enter an exit code to start execution")
-        if var > -1 and var < 4:
+        var = int(raw_input("Waiting to start.\nEnter an exit code to start execution:\n"))
+        if var >= -2 and var <= 4:
             exit_code = var
-            break
+            waiting = True
+            continue
+            
+    if exit_code == -2:
+        while not dead:
+            e = actions[0].playDead()
+            if e == 0:
+                dead = True
+        
+        var = int(raw_input("Playing Dead.\nEnter an exit code to start be alive:\n"))
+        if var >= -1 and var <= 4:
+            actions[0].alive()
+            exit_code = var
+            dead = False
+            continue
         
 
     ## Read ZMQ inputs
