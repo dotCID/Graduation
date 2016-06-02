@@ -35,6 +35,7 @@ from globalVars import CHANNEL_ENERGYDATA
 from poses import pos_default
 from poses import pos_min
 from poses import pos_max
+from poses import pos_dead
 
 loc_printing = False
 
@@ -363,7 +364,16 @@ class Action:
         else:
             self.loops_executed+=1
             return 1
-        
+
+    def playDead(self):
+        """
+        Allows the robot to play dead while not active on stage
+        """
+        self.pos_target = list(pos_dead)
+        return self.execute()
+    
+    def alive(self):
+        self.pos_target = list(pos_default)
     
     def execute(self,loops = 250):
         """
