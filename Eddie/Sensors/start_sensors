@@ -5,3 +5,5 @@ gnome-terminal -x python controlBox.py
 gnome-terminal -x python simpleCV_3.py
 
 gnome-terminal -x python beatDetect.py
+
+gnome-terminal -x python IMUInterface.py
