@@ -106,7 +106,7 @@ energyData   = {
                 'eg_label' : "none"
                }
 
-exit_code = EXIT_CODE_DONE
+exit_code = -1 # start without movement
 
 def randomSelect(chances, modes):
     """
@@ -164,8 +164,22 @@ def randomSelectC():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
+not_started = True
 
 while True:
+    if exit_code == -1:
+        ## Start in user input mode at default position
+        while not_started:
+            e = actions[0].execute(150)
+            if e == 0:
+                not_started = False
+        
+        var = raw_input("Enter an exit code to start execution")
+        if var > -1 and var < 4:
+            exit_code = var
+            break
+        
+
     ## Read ZMQ inputs
     if len(orientationPoller.poll(0)) is not 0:
         orientationData = orientationChannel.recv_json()
@@ -181,7 +195,6 @@ while True:
         (user_contact_angles['z'] >= orientationData['z'] - MARGIN_USER_CONTACT )) and \
         exit_code != 1 and exit_code != 2:
         if printing: print "Possible attention!", exit_code
-        time.sleep(3)
         exit_code = actions[2].execute()
         continue
     
@@ -204,19 +217,19 @@ while True:
         if energyData['eg_label'] == "none":
             nextAction = randomSelectA()
             if printing: print "Randomly selected", nextAction
-            exit_code = actions[nextAction].execute(150)
+            exit_code = actions[nextAction].execute(250)
             if TEST_MODE_SLOW: time.sleep(1)
             continue
         elif energyData['eg_label'] == "low":
             nextAction = randomSelectB()
             if printing: print "Randomly selected", nextAction
-            exit_code = actions[nextAction].execute(150)
+            exit_code = actions[nextAction].execute(250)
             if TEST_MODE_SLOW: time.sleep(1)
             continue
         elif energyData['eg_label'] == "high":
             nextAction = randomSelectC()
             if printing: print "Randomly selected", nextAction
-            exit_code = actions[nextAction].execute(150)
+            exit_code = actions[nextAction].execute(250)
             if TEST_MODE_SLOW: time.sleep(1)
             continue
     elif exit_code is EXIT_CODE_ERROR:
@@ -225,7 +238,7 @@ while True:
             pass
     else:
         # if an Action returns anything other than EXIT_CODE_DONE we follow their advice:
-        if printing: print "Continuing ", exit_code
-        exit_code = actions[exit_code].execute(150)
+        #if printing: print "Continuing ", exit_code
+        exit_code = actions[exit_code].execute(250)
 
         continue
