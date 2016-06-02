@@ -28,6 +28,8 @@ from globalVars import BOT_ARDUINO_BAUDRATE as ARDUINO_BAUDRATE
 from globalVars import printing
 from globalVars import TEST_MODE_SLOW
 from globalVars import CHANNEL_MODE
+from globalVars import CHANNEL_BPM
+from globalVars import CHANNEL_ENERGYDATA
 
 ## Pose data
 from poses import pos_default
@@ -64,15 +66,22 @@ class Action:
         
         # Modifiers for beat response
         self.beatMod = {
-                        'mod'   : 10,  # degrees of modification +/-
+                        'mod'   : 0.6,  # degrees of modification +/-
                         'dir'   : 0    # direction of modification. can be -1 | 0 | 1
                        }
+        self.BPM = 120.0
+        self.beatInterval = 60000.0 / self.BPM
+        self.energyLevel = "none"
+        self.lastIntervalSwitch = 0
+        
         # Position
         self.pos_target     = list(pos_default)
         
         # Looping variables
         self.loops_executed = 0
         self.max_loops = 0
+        
+        self.doneTime = 0
         
         # Initialise the Arduino
         r = aI.arduinoConnect(ARDUINO_ADDRESS, ARDUINO_BAUDRATE)
@@ -87,8 +96,27 @@ class Action:
         self.modePoller = zmq.Poller()
         self.modePoller.register(self.modeChannel, zmq.POLLIN)
         
+        # Initialise ZMQ BPM channel:
+        self.bd_context = zmq.Context()
+        self.bpmChannel = self.bd_context.socket(zmq.SUB)
+        self.bpmChannel.setsockopt(zmq.CONFLATE, 1 )
+        self.bpmChannel.setsockopt(zmq.SUBSCRIBE, '')
+        self.bpmChannel.connect(CHANNEL_BPM)
+        self.bpmPoller = zmq.Poller()
+        self.bpmPoller.register(self.bpmChannel, zmq.POLLIN)
+        
+        # Initialise ZMQ ENERGYDATA channel:
+        self.eg_context = zmq.Context()
+        self.egChannel = self.eg_context.socket(zmq.SUB)
+        self.egChannel.setsockopt(zmq.CONFLATE, 1 )
+        self.egChannel.setsockopt(zmq.SUBSCRIBE, '')
+        self.egChannel.connect(CHANNEL_ENERGYDATA)
+        self.egPoller = zmq.Poller()
+        self.egPoller.register(self.egChannel, zmq.POLLIN)
+        
     # Arduino-style millis() function for timekeeping
-    millis = lambda: int(round(time.time() * 1000))
+    def millis(self):
+        return int(round(time.time() * 1000))
     
     def currentPosition(self):
         return aI.getAngles()
@@ -184,9 +212,12 @@ class Action:
         for i in range(len(list1)):
             if abs(list1[i] - list2[i]) < self.minV * 3: #A bit of tolerance is needed to prevent infinite loops
                 done_count+=1
+            elif abs(list1[i] - list2[i]) < self.beatMod['dir']*1.2:
+                done_count+=1
             
                 
         if done_count == len(list1):
+            self.doneTime = self.millis()
             return True
         else:
             return False
@@ -206,7 +237,9 @@ class Action:
         if type(in1) is list:
             return  self.done_list(in1, in2)
         elif abs(in1 - in2) < self.minV*3:
+            self.doneTime = self.millis()
             return True
+            
         return False
         
     def getMode(self, oldMode):
@@ -218,6 +251,25 @@ class Action:
             return self.modeChannel.recv_json()
         else: return oldMode
         
+    def getBPM(self, oldBPM):
+        """
+        Function to get the latest BPM data from the CHANNEL_BPM. If none available, returns the passed old BPM.
+        @param oldBPM: previously set BPM, f.i. "120.0"
+        """
+        if len(self.bpmPoller.poll(0)) is not 0:
+            return round(float(self.bpmChannel.recv_json()['bpm']),1)
+        else: return oldBPM
+    
+    def getEnergy(self, oldEnergy):
+        """
+        Function to get the latest energy data from the CHANNEL_ENERGYDATA. If none available, returns the passed old energy.
+        @param oldEnergy: previously set energy label, f.i. "none"
+        """
+        
+        if len(self.egPoller.poll(0)) is not 0:
+            return self.egChannel.recv_json()['eg_label']
+        else: return oldEnergy
+    
     def adaptToMode(self):
         """
         Function to adapt the accelleration and minimum and maximum speeds according to the mode broadcast in the CHANNEL_MODE.
@@ -240,7 +292,18 @@ class Action:
         """
         Calculates what direction to move in and how much, depending on data from the beatData channel.
         """
-        #TODO: implementation
+        self.energyLevel = self.getEnergy(self.energyLevel)
+        if self.energyLevel == "none":
+            self.beatMod['dir'] = 0
+            return
+        elif self.beatMod['dir'] == 0:
+            self.beatMod['dir'] = 1
+        self.BPM = self.getBPM(self.BPM)
+        self.beatInterval = 60000.0 / self.BPM
+        if self.millis() - self.lastIntervalSwitch > self.beatInterval:
+            self.beatMod['dir'] *= -1
+            self.lastIntervalSwitch = self.millis()
+        
     
     def move(self, end_pose):
         """
@@ -248,16 +311,19 @@ class Action:
         @param list end_pose: the list of desired end poses
         """
         
-        if printing: print "Action: move: end_pose = ",end_pose
+        # if printing: print "Action: move: end_pose = ",end_pose
         self.adaptToMode()
         
         pos = aI.getAngles() ## This is the new method of getting current joint data
-        
+
+        self.calcBeatMod()
+        """
         # modify the end pose with the beat
         # 1 and 3 are opposed, hence + & -
         tar_pose = [end_pose[0], end_pose[1] + (self.beatMod['mod'] * self.beatMod['dir']), \
                                  end_pose[2] - (self.beatMod['mod'] * self.beatMod['dir'])]
-        
+        """
+        tar_pose = end_pose
         if not self.done_list(pos, tar_pose):
             self.determineVmax(pos, tar_pose)
             
@@ -277,10 +343,10 @@ class Action:
                     pos[i] = tar_pose[i]
                     self.braking[i] = False
             
+            r = aI.moveTo([pos[0], pos[1] + (self.beatMod['mod'] * self.beatMod['dir']), pos[2] - (self.beatMod['mod'] * self.beatMod['dir'])])
             
-            r = aI.moveTo(pos)
-            if printing: print "Action: move: sent:",pos
-            if printing: print "Action: move: response:",r.strip('\r\n'), "\n"
+            #if printing: print "Action: move: sent:",pos
+            #if printing: print "Action: move: response:",r.strip('\r\n'), "\n"
         else:
             print "Action: move: Done moving."
     
@@ -312,8 +378,9 @@ class Action:
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
-        print self.loops_executed
-        return EXIT_CODE_A1
+        self.move(self.pos_target)
+        return -1
+        
     
     def getUserContactAngles(self):
         return Action.user_contact_angles
