@@ -1,3 +1,4 @@
+#!/user/bin/python
 '''
 This script replaces the energy measurement and head bob BPM detection by inputs from an external control box.
 '''
