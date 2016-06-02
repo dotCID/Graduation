@@ -28,7 +28,7 @@ CAMERA_ID_NUMBER = 1
 
 ## Exit codes for the Actions
 EXIT_CODE_DONE  = 0
-EXIT_CODE_ERROR = -1
+EXIT_CODE_ERROR = -15
 
 # Continue to a different Action:
 EXIT_CODE_CONTACT  = 1
