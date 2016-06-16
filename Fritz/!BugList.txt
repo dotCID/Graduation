@@ -1,0 +1,14 @@
+BugList
+
+#1 Action move:
+    interpolation between endpoints might be bugged, cannot tell with weak servos
+    -> looks to be the jitter bug (# 4)
+    
+#2 beatDetect.py:
+    BPM cannot drop to 0 - not sure if this will be an issue during actual use
+    
+#3 beatDetect2.py:
+    Solved above issue but at the cost of accuracy (a lot of it)
+    
+#4 Servo 1 (BV) (Hig Power) moves rather jittery.
+    Cause known; too little power required for keeping position causes oscillation. Minor issue while in motion, especially when using the beatMod

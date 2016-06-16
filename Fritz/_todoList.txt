@@ -1,0 +1,6 @@
+1. Fully test system
+    - fix any remaining bugs
+
+2. Create vent hole for PSU
+    Possibly with fan
+
