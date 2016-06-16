@@ -1,20 +1,6 @@
-Priorities for concert
---------------------------
-
 1. Fully test system
     - fix any remaining bugs
 
 2. Create vent hole for PSU
     Possibly with fan
 
-3. Paint casing top black
-
-4. Write things on the questionnaire box
-
-
-Setup at concert
---------------------------
-
-1. Calibration of IMU on stage
-
-2. Tape robot to table
