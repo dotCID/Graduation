@@ -27,9 +27,16 @@ rawpos = p_context.socket(zmq.PUB)
 rawpos.bind(CHANNEL_IMU_RAWPOS)
 
 ## Set up the Arduino
-imu_arduino = serial.Serial(IMU_ARDUINO_ADDRESS, IMU_ARDUINO_BAUDRATE, timeout=.1)
-line = imu_arduino.readline().strip()
-print "\n -- Connected to Arduino --\n"
+try:
+    print "Connecting to ", IMU_ARDUINO_ADDRESS
+    imu_arduino = serial.Serial(IMU_ARDUINO_ADDRESS, IMU_ARDUINO_BAUDRATE, timeout=.1)
+    line = imu_arduino.readline().strip()
+    print "\n -- Connected to Arduino --\n"
+except:
+    print "Could not connect. Looping forever."
+    while True:
+        a = 1
+
 
 ## Function to read the imu arduino and check if the line is new
 def ardRead():

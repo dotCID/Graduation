@@ -106,7 +106,7 @@ energyData   = {
                 'eg_label' : "none"
                }
 
-exit_code = -1 # start without movement
+exit_code = -2 # start without movement
 
 def randomSelect(chances, modes):
     """

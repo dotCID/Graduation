@@ -27,9 +27,15 @@ bored       = Action_Bored.SpecificAction()
 sys.stdout.write("\x1b]2;Sensors/controlBox_backupMode.py\x07")
 
 ## Arduino setup
-box_arduino = serial.Serial(CONTROLBOX_ARDUINO_ADDRESS, CONTROLBOX_ARDUINO_BAUDRATE, timeout=.1)
-line = box_arduino.readline().strip()
-print "controlbox: \n", line
+try:
+    print "Connecting to ", CONTROLBOX_ARDUINO_ADDRESS
+    box_arduino = serial.Serial(CONTROLBOX_ARDUINO_ADDRESS, CONTROLBOX_ARDUINO_BAUDRATE, timeout=.1)
+    line = box_arduino.readline().strip()
+    print "controlbox: \n", line
+except:
+    print "Could not connect. Looping forever."
+    while True:
+        a = 1
 
 def ardRead():
     """ Function to read the imu arduino and check if the line is new """ 

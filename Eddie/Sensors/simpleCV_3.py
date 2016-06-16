@@ -33,7 +33,7 @@ frame = 0
 
 # Adjust camera settings from OS, since SimpleCV's commands don't do anything:
 sp.call(["uvcdynctrl -d '"+camera_id+"' -s 'Exposure, Auto' 1"], shell = True)         # Disable auto exposure
-sp.call(["uvcdynctrl -d '"+camera_id+"' -s 'Exposure (Absolute)' 2000"], shell = True)    # Set absolute exposure
+sp.call(["uvcdynctrl -d '"+camera_id+"' -s 'Exposure (Absolute)' 12"], shell = True)    # Set absolute exposure
 
 display = SimpleCV.Display()
 cam = SimpleCV.Camera(CAMERA_ID_NUMBER, {"width":width,"height":height})

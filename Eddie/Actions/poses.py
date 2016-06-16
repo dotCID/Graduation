@@ -18,9 +18,9 @@ scan_pos_L = [ 10.0, 110.0, 135.0]
 scan_pos_R = [105.0,  90.0, 145.0]
 
 ## Action 3: Focus
-focus_pos_C = [ 105.0,  80.0, 130.0]
-focus_pos_L = [ 140.0,  60.0, 140.0]
-focus_pos_R = [  75.0,  70.0, 150.0]
+focus_pos_C = [ 145.0,  80.0, 130.0]
+focus_pos_L = [ 160.0,  60.0, 140.0]
+focus_pos_R = [ 125.0,  70.0, 150.0]
 
 ## Action 4: Stevie
 drifting_pos_C = [ 110.0, 130.0, 120.0]

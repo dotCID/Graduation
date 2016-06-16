@@ -15,15 +15,15 @@ bool fullStop = false;
 
 #define BH_MIN 0
 #define BH_MAX 180
-#define BH_DEF 100
+#define BH_DEF 170
 
 #define BV_MIN 0
 #define BV_MAX 180
-#define BV_DEF 75
+#define BV_DEF 30
 
 #define TV_MIN 0
 #define TV_MAX 180
-#define TV_DEF 90
+#define TV_DEF 75
 
 #define BEAT_TRESHOLD 10
 
