@@ -12,7 +12,7 @@ pos_max        = (170.0, 160.0, 160.0)
 pos_dead       = (170, 30, 75 )
 
 ## Action 1: Contact
-contact_joint_positions = [ 94.0 , 75.0, 90.0 ]
+contact_joint_positions = [ 170.0 , 100.0, 140.0 ]
 
 ## Action 2: Scan
 scan_pos_L = [ 10.0, 110.0, 135.0]
