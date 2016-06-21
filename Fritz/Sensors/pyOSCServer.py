@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0,'..')
 
 from OSC import OSCServer
-from time import sleep
+import time
 from globalVars import CHANNEL_BPM
 
 import zmq
@@ -20,10 +20,15 @@ context = zmq.Context()
 socket = context.socket(zmq.PUB)
 socket.bind(CHANNEL_BPM)
 
-server = OSCServer( ('145.94.194.158', 9001) )
-server.timeout = 0
-run = True
-
+try:
+    server = OSCServer( ('145.94.195.200', 9001) )
+    server.timeout = 0
+    run = True
+    print "Created the server. Listening.."
+except:
+    print "Could not create to server."
+    while True:
+        continue
 
 #Arduino-style millis() function for timekeeping
 millis = lambda: int(round(time.time() * 1000))
@@ -38,6 +43,7 @@ def default_callback(path, tags, args, source):
     return
     
 def bpm_callback(path, tags, args, source):
+    print "BPM:",args[0]
     BPM = {
             't'  : millis(),
             'bpm': args[0]
@@ -45,7 +51,7 @@ def bpm_callback(path, tags, args, source):
 
     socket.send_json(BPM)
     
-    print "BPM:",args[0]
+
 
 # funny python's way to add a method to an instance of a class
 import types
@@ -53,6 +59,7 @@ server.handle_timeout = types.MethodType(handle_timeout, server)
 
 server.addMsgHandler( "/live/tempo", bpm_callback )
 server.addMsgHandler( "/live/", default_callback )
+server.addMsgHandler( "/live/beat", default_callback)
 
 # user script that's called by the game engine every frame
 def each_frame():

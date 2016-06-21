@@ -24,6 +24,7 @@ from OSC import OSCMessage
 from globalVars import OSC_ABLETON_IP
 
 ## Other
+import time
 from globalVars import printing
 from globalVars import THRESHOLD_EDIFF
 from globalVars import ENERGY_CALC_TIME
@@ -103,14 +104,28 @@ class SpecificAction(Action):
     
     def getBeatData(self):
         """ Simple function for shorter syntax """
-        if len(self.beatDataPoller.poll(0)) is not 0:
+        '''if len(self.beatDataPoller.poll(0)) is not 0:
             return self.beatDataChannel.recv_json()
         else:
             return self.beatData
-    
+        '''
+        #above would output so many 0's that it skewed results, better to use blocking than a poller
+        return self.beatDataChannel.recv_json()
+        
     def getBPM(self):
-        """ Simple function for shorter syntax """
+        """ Get the current Ableton BPM """
+        # Request BPM message
+        print "Requesting BPM"
+        client = OSCClient()
+        client.connect((OSC_ABLETON_IP, 9000))
+        msg = OSCMessage()
+        msg.setAddress("/live/tempo")
+        client.send(msg)
+        time.sleep(0.5)
+        
+        #receive response
         if len(self.bpmPoller.poll(0)) is not 0:
+            print "Received new BPM"
             return self.bpmChannel.recv_json()['bpm']
         else:
             return self.currBPM
@@ -124,18 +139,26 @@ class SpecificAction(Action):
         msg.append(newBPM)
         client.send(msg)
         if printing: print "Set BPM to",newBPM
+        self.currBPM = newBPM
             
     def adjustBPM(self):
         """ Adjust the BPM in Ableton according to the measured values """
         ediff = self.averageEnergy - self.localAvgEnergy
+        print "ediff was", ediff
+        
+        bpmDifference = abs(round(ediff/10,0)*10)
+        
+        if bpmDifference > BPM_DIFF:
+            bpmDifference = BPM_DIFF
         
         if abs(ediff) > THRESHOLD_EDIFF:
             oldBPM = self.getBPM()
             newBPM = oldBPM
-            if ediff > 0:
-                newBPM = oldBPM + BPM_DIFF
+            if ediff < 0:
+                newBPM = oldBPM + bpmDifference
             else:
-                newBPM = oldBPM - BPM_DIFF
+                newBPM = oldBPM - bpmDifference
+            print "newBPM: ",newBPM
             self.setBPM(newBPM)
                 
             
@@ -154,35 +177,20 @@ class SpecificAction(Action):
         else:
             # calculate BPM over given interval
             if self.energy_calc_start is None:
-                self.energy_calc_start is Action.millis()
+                self.energy_calc_start = self.millis()
                 
-            if Action.millis() - self.energy_calc_start < ENERGY_CALC_TIME * 1000:
+            if (self.millis() - self.energy_calc_start) < (ENERGY_CALC_TIME-1) * 1000:
                 self.energyVals.append(self.getBeatData()['s0'])
+                print "calculating energy (",self.millis() - self.energy_calc_start, ")"
             else:
                 self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
+                print "last average energy was ",self.localAvgEnergy
                 self.adjustBPM()
-            
-        self.targetData = self.getTargetData()
-        if self.targetData['found']:
-            if printing: print "Action_Contact: Found target. Following."
-            deg_x = -self.targetData['tar_dg']['x'] 
-            deg_y = -self.targetData['tar_dg']['y']
-            findTime = self.targetData['findTime']
-            
-            print "Action_Contact: adjustment: ", deg_x, deg_y
-            
-            pos = self.currentPosition()
-            newpos = (pos[0] + deg_x, pos[1], pos[2] + deg_y)
-            self.move(newpos)
-            return EXIT_CODE_SELF
-            
-        elif not self.done(self.currentPosition(), Action.contact_joint_positions):
-            if printing: print "Action_Contact: Moving to last known contact position"
-            self.move(Action.contact_joint_positions)
-            return EXIT_CODE_SELF
-            
-        else:
-            if printing: print "Action_Contact: Target lost, scanning"
-            return EXIT_CODE_SCAN
+                
+                # clear old values
+                self.energyVals = []
+                self.energy_calc_start = None
+                
+                return EXIT_CODE_DONE
             
         return EXIT_CODE_SELF

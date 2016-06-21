@@ -120,7 +120,6 @@ energyData   = {
                 'eg_label' : "none"
                }
 
-exit_code = -2 # start without movement
 
 def randomSelect(chances, modes):
     """
@@ -189,7 +188,8 @@ def getPedalState():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
-waiting = True
+exit_code = 1 # start without movement
+waiting = False
 dead = False
 
 oldPedalState = getPedalState()
@@ -241,10 +241,12 @@ while True:
         continue
         
     ## Support for foot pedal:
-    elif getPedalState() != oldPedalState:
-        oldPedalState = getPedalState()
+    pedalState = getPedalState()
+    if pedalState != oldPedalState:
         if printing: print "Foot pedal was pressed!"
-        exit_code = actions[2].execute()
+        print "old:", oldPedalState, " new:", pedalState
+        oldPedalState = pedalState
+        exit_code = actions[1].execute()
         continue
         
     ## Check whether we need to consult the camera for unexpected contact

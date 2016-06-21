@@ -16,7 +16,7 @@ CHANNEL_IMU_RAWPOS  = "tcp://127.0.0.1:4008"
 CHANNEL_PEDAL       = "tcp://127.0.0.1:4009" # Current state of the foot pedal
 
 ## OSC Addresses
-OSC_ABLETON_IP      = "145.94.159.149"
+OSC_ABLETON_IP      = "145.94.156.193"
 
 ## Arduinos 
 BOT_ARDUINO_ADDRESS = '/dev/ttyUSB0'
@@ -47,9 +47,10 @@ EXIT_CODE_BORED    = 5
 
 ## Margins
 MARGIN_USER_CONTACT = 30.0
-THRESHOLD_EDIFF = 20.0      # Energy difference in movement needed for BPM adjustment
+THRESHOLD_EDIFF = 10.0      # Energy difference in movement needed for BPM adjustment
 ENERGY_CALC_TIME = 5.0      # Seconds over which user input on BPM adjustment is counted
-BPM_DIFF = 10.0             # BPM shift if user input was detected
+ENERGY_AVG_LENGTH = 400     # Amount of samples over which comparable energy is taken ( 100 samples =~ 5 seconds)
+BPM_DIFF = 30.0             # Maximum BPM shift if user input was detected
 
 ## Debug values
 printing  = True
