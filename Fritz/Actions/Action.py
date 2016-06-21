@@ -9,7 +9,7 @@ The intention is for all actions that can be selected by the Action Picker to ha
 import time
 import arduinoInterface as aI # This will replace the JointData channel. All subclasses share access to this interface and it contains the current joint data
 
-import zmq
+import zmq, OSC
 
 ## Exit codes for the actions
 from globalVars import EXIT_CODE_DONE
@@ -33,6 +33,7 @@ from globalVars import CHANNEL_BPM
 from globalVars import CHANNEL_ENERGYDATA
 
 from globalVars import MAX_PED_RESP_TIME
+from globalVars import OSC_ABLETON_IP
 
 ## Pose data
 from poses import pos_default
@@ -75,7 +76,7 @@ class Action:
                        }
         self.BPM = 120.0
         self.beatInterval = 60000.0 / self.BPM
-        self.energyLevel = "none"
+        self.energyLevel = "high"
         self.lastIntervalSwitch = 0
         
         # In response to adjusting beat:
@@ -121,6 +122,10 @@ class Action:
         self.egChannel.connect(CHANNEL_ENERGYDATA)
         self.egPoller = zmq.Poller()
         self.egPoller.register(self.egChannel, zmq.POLLIN)
+        
+        
+        # After all has been defined, get BPM once
+        self.BPM = self.getBPM(self.BPM)
         
     # Arduino-style millis() function for timekeeping
     def millis(self):
@@ -260,13 +265,24 @@ class Action:
         else: return oldMode
         
     def getBPM(self, oldBPM):
-        """
-        Function to get the latest BPM data from the CHANNEL_BPM. If none available, returns the passed old BPM.
-        @param oldBPM: previously set BPM, f.i. "120.0"
-        """
+        """ Get the current Ableton BPM """
+        # Request BPM message
+        if printing: print "Requesting BPM"
+        client = OSC.OSCClient()
+        client.connect((OSC_ABLETON_IP, 9000))
+        msg = OSC.OSCMessage()
+        msg.setAddress("/live/tempo")
+        client.send(msg)
+        
+        # wait for response
+        time.sleep(0.5)
+        
+        #receive response
         if len(self.bpmPoller.poll(0)) is not 0:
-            return round(float(self.bpmChannel.recv_json()['bpm']),1)
-        else: return oldBPM
+            if printing: print "Received new BPM"
+            return self.bpmChannel.recv_json()['bpm']
+        else:
+            return oldBPM
     
     def getEnergy(self, oldEnergy):
         """
@@ -313,6 +329,7 @@ class Action:
         Internal function to reset the pedal response modifications
         """
         if not self.pedalResponseDone and (self.millis() - self.pedalResponseTime) > MAX_PED_RESP_TIME:
+            self.BPM = self.getBPM(self.BPM)
             self.beatMod['mod'] = 0.6
             self.pedalResponseDone = True
     
@@ -328,7 +345,6 @@ class Action:
             return
         elif self.beatMod['dir'] == 0:
             self.beatMod['dir'] = 1
-        self.BPM = self.getBPM(self.BPM)
         self.beatInterval = 60000.0 / self.BPM
         if self.millis() - self.lastIntervalSwitch > self.beatInterval:
             self.beatMod['dir'] *= -1
@@ -423,3 +439,4 @@ class Action:
     
     def getUserContactAngles(self):
         return Action.user_contact_angles
+
