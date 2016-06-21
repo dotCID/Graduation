@@ -30,6 +30,8 @@ from globalVars import THRESHOLD_EDIFF
 from globalVars import ENERGY_CALC_TIME
 from globalVars import BPM_DIFF
 
+from poses import contact_joint_positions
+
 class SpecificAction(Action):
 
     # Target channel:
@@ -108,26 +110,6 @@ class SpecificAction(Action):
         '''
         #above would output so many 0's that it skewed results, better to use blocking than a poller
         return self.beatDataChannel.recv_json()
-        
-    def getBPM(self):
-        """ Get the current Ableton BPM """
-        # Request BPM message
-        print "Requesting BPM"
-        client = OSCClient()
-        client.connect((OSC_ABLETON_IP, 9000))
-        msg = OSCMessage()
-        msg.setAddress("/live/tempo")
-        client.send(msg)
-        
-        # wait for response
-        time.sleep(0.5)
-        
-        #receive response
-        if len(self.bpmPoller.poll(0)) is not 0:
-            print "Received new BPM"
-            return self.bpmChannel.recv_json()['bpm']
-        else:
-            return self.currBPM
             
     def setBPM(self, newBPM):
         """ Sets the BPM in Ableton """
@@ -153,7 +135,7 @@ class SpecificAction(Action):
             bpmDifference = BPM_DIFF
         
         if abs(ediff) > THRESHOLD_EDIFF:
-            oldBPM = self.getBPM()
+            oldBPM = self.getBPM(self.currBPM)
             newBPM = oldBPM
             if ediff < 0:
                 newBPM = oldBPM + bpmDifference
@@ -176,9 +158,9 @@ class SpecificAction(Action):
         #if self.loopCheck() == EXIT_CODE_DONE:
         #    return EXIT_CODE_DONE
         
-        if not self.done(self.currentPosition(), Action.contact_joint_positions):
+        if not self.done(self.currentPosition(), contact_joint_positions):
             if printing: print "Action_Contact: Moving to look at pedal user"
-            self.move(Action.contact_joint_positions)
+            self.move(contact_joint_positions)
             return EXIT_CODE_SELF
         else:
             if self.averageEnergy is None:
