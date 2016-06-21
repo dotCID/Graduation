@@ -16,7 +16,7 @@ from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
 from globalVars import EXIT_CODE_CONTACT
 from globalVars import EXIT_CODE_SCAN
-from globalVars import EXIT_CODE_FOCUS
+from globalVars import EXIT_CODE_ACK
 from globalVars import EXIT_CODE_STEVIE
 from globalVars import EXIT_CODE_BORED
 

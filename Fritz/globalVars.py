@@ -41,7 +41,7 @@ EXIT_CODE_ERROR = -15
 # Continue to a different Action:
 EXIT_CODE_CONTACT  = 1
 EXIT_CODE_SCAN     = 2
-EXIT_CODE_FOCUS    = 3
+EXIT_CODE_ACK      = 3
 EXIT_CODE_STEVIE   = 4
 EXIT_CODE_BORED    = 5
 

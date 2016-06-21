@@ -9,6 +9,7 @@ from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
 from globalVars import EXIT_CODE_SCAN
 from globalVars import EXIT_CODE_CONTACT
+from globalVars import EXIT_CODE_ACK
 
 EXIT_CODE_SELF = EXIT_CODE_CONTACT
 
@@ -182,6 +183,6 @@ class SpecificAction(Action):
                     self.energy_calc_start = None
                     self.averageEnergy = None
                     
-                    return EXIT_CODE_DONE
+                    return EXIT_CODE_ACK
             
             return EXIT_CODE_SELF
