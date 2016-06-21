@@ -47,26 +47,36 @@ def ardRead():
 # MCW: Arduino-style millis() function for timekeeping
 millis = lambda: int(round(time.time() * 1000))
 
-while True:
-    arduino_data = ardRead()
-    
-    if len(arduino_data) <= 1:
-        # garbage input
-        time.sleep(0.02)
-        continue
-    else:
-        data = arduino_data.split(" ")
+try:
+    while True:
+        arduino_data = ardRead()
         
-        if len(data) > 1:
-            ped_msg = {
-                        'state' : int(data[1])
-                     }
+        if len(arduino_data) <= 1:
+            # garbage input
+            time.sleep(0.02)
+            continue
+        elif arduino_data[0] != "p":
+            print arduino_data
+            continue
+        else:
+            data = arduino_data.split(" ")
             
-            socket.send_json(ped_msg)
-            print "\t Sent: ",ped_msg
-            
-        else: print "\t Could not send ",data
+            if len(data) > 1:
+                try:
+                    ped_msg = {
+                                'state' : int(data[1])
+                             }
+                    
+                    socket.send_json(ped_msg)
+                    print "\t Sent: ",ped_msg
+                except:
+                    print "\t Could not send ",data, "Not an int"
+                
+            else: print "\t Could not send ",data
 
-        print "Pedal: ",arduino_data,
-        
-                  
+            print "Pedal: ",arduino_data,
+
+except KeyboardInterrupt:    # should close Serial port properly
+    print "\n\n********** Closing Serial port before exit **************\n"
+    ped_arduino.close()
+    raise
