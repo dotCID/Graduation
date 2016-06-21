@@ -8,6 +8,6 @@ gnome-terminal -x python beatDetect.py
 
 gnome-terminal -x python IMUInterface.py
 
-gnome-terminal -x pyOSCServer.py
+gnome-terminal -x python pyOSCServer.py
 
-gnome-terminal -x footPedal.py
+gnome-terminal -x python footPedal.py
