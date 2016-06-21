@@ -18,6 +18,8 @@ from globalVars import CHANNEL_IMU_RAWPOS
 from globalVars import CHANNEL_ENERGYDATA
 from globalVars import CHANNEL_TARGETDATA
 from globalVars import CHANNEL_MODE
+from globalVars import CHANNEL_PEDAL
+
 from globalVars import MARGIN_USER_CONTACT
 from globalVars import printing
 from globalVars import TEST_MODE_SLOW
@@ -70,6 +72,18 @@ targetPoller.register(targetChannel, zmq.POLLIN)
 mode_context = zmq.Context()
 mode_socket = mode_context.socket(zmq.PUB)
 mode_socket.bind(CHANNEL_MODE)
+
+## ZMQ Pedal Channel - provides the current state of the foot pedal
+ped_context = zmq.Context()
+pedChannel = ped_context.socket(zmq.SUB)
+pedChannel.setsockopt(zmq.CONFLATE, 1 )
+pedChannel.setsockopt(zmq.SUBSCRIBE, '')
+pedChannel.connect(CHANNEL_PEDAL)
+
+pedPoller = zmq.Poller()
+pedPoller.register(pedChannel, zmq.POLLIN)
+
+oldPedalState = None
 
 ## Actions
 ''' **** NOTE THAT THESE MUST HAVE THE SAME INDEX IN THIS ARRAY AS THEIR NORMAL EXIT CODE **** '''
@@ -160,12 +174,25 @@ def randomSelectC():
     
     return randomSelect(chances, modes)
 
+def getPedalState():
+    """
+    Gets the current state of the foot pedal
+    """
+    global oldPedalState
+    if len(pedPoller.poll(0)) is not 0:
+        pedData = pedChannel.recv_json()
+    
+        return pedData['state']
+    else: return oldPedalState
+
 #############################################################
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
 waiting = True
 dead = False
+
+oldPedalState = getPedalState()
 
 while True:
     if exit_code == -1:
@@ -212,7 +239,14 @@ while True:
         if printing: print "Possible attention!", exit_code
         exit_code = actions[2].execute()
         continue
-    
+        
+    ## Support for foot pedal:
+    elif getPedalState() != oldPedalState:
+        oldPedalState = getPedalState()
+        if printing: print "Foot pedal was pressed!"
+        exit_code = actions[2].execute()
+        continue
+        
     ## Check whether we need to consult the camera for unexpected contact
     if (exit_code is not EXIT_CODE_CONTACT) and (exit_code is not EXIT_CODE_SCAN):
        # if printing: print "Checking camera."
