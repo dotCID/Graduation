@@ -56,13 +56,17 @@ while True:
         continue
     else:
         data = arduino_data.split(" ")
-    
-        ped_msg = {
-                    'state' : int(data[1])
-                 }
-    
+        
+        if len(data) > 1:
+            ped_msg = {
+                        'state' : int(data[1])
+                     }
+            
+            socket.send_json(ped_msg)
+            print "\t Sent: ",ped_msg
+            
+        else: print "\t Could not send ",data
+
         print "Pedal: ",arduino_data,
         
-        print "\t Sent: ",ped_msg
                   
-        socket.send_json(ped_msg)
