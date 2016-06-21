@@ -117,7 +117,7 @@ targetData   = {
 energyData   = {
                 't'        : millis(),
                 'energy'   : 0.0,
-                'eg_label' : "none"
+                'eg_label' : "low"
                }
 
 
@@ -188,7 +188,7 @@ def getPedalState():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
-exit_code = 1 # start without movement
+exit_code = 0 # start without movement
 waiting = False
 dead = False
 
