@@ -27,15 +27,19 @@ from globalVars import BOT_ARDUINO_BAUDRATE as ARDUINO_BAUDRATE
 ## Other
 from globalVars import printing
 from globalVars import TEST_MODE_SLOW
+
 from globalVars import CHANNEL_MODE
 from globalVars import CHANNEL_BPM
 from globalVars import CHANNEL_ENERGYDATA
+
+from globalVars import MAX_PED_RESP_TIME
 
 ## Pose data
 from poses import pos_default
 from poses import pos_min
 from poses import pos_max
 from poses import pos_dead
+from poses import contact_joint_positions
 
 loc_printing = False
 
@@ -47,7 +51,6 @@ class Action:
                             'y' : 5.0,
                             'z' : -180.0
                           }
-    contact_joint_positions     = [ 94.0 , 75.0, 90.0 ]
 
     def __init__(self):
         # Output control
@@ -74,6 +77,10 @@ class Action:
         self.beatInterval = 60000.0 / self.BPM
         self.energyLevel = "none"
         self.lastIntervalSwitch = 0
+        
+        # In response to adjusting beat:
+        self.pedalResponseTime = 0.0
+        self.pedalResponseDone = True
         
         # Position
         self.pos_target     = list(pos_default)
@@ -288,11 +295,33 @@ class Action:
             self.maxV = 8.00
             self.a = 0.025
             self.vMax = [self.maxV, self.maxV, self.maxV]
+            
+    def pedalResponse(self, direction):
+        """
+        Responds to adjustment of beat up or down
+        """
+        if direction == "up":
+            self.beatMod['mod'] = 0.8
+        elif direction == "down":
+            self.beatMod['mod'] = 0.4
+            
+        self.pedalResponseTime = self.millis()
+        self.pedalResponseDone = False
+    
+    def _pedalResponse(self):
+        """
+        Internal function to reset the pedal response modifications
+        """
+        if not self.pedalResponseDone and (self.millis() - self.pedalResponseTime) > MAX_PED_RESP_TIME:
+            self.beatMod['mod'] = 0.6
+            self.pedalResponseDone = True
     
     def calcBeatMod(self):
         """
         Calculates what direction to move in and how much, depending on data from the beatData channel.
         """
+        self._pedalResponse()
+        
         self.energyLevel = self.getEnergy(self.energyLevel)
         if self.energyLevel == "none":
             self.beatMod['dir'] = 0

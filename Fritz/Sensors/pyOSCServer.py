@@ -51,7 +51,8 @@ def bpm_callback(path, tags, args, source):
 
     socket.send_json(BPM)
     
-
+def error_callback(path, tags, args, source):
+    print "\nInvalid input sent; Ableton returned:\n",args, "\n"
 
 # funny python's way to add a method to an instance of a class
 import types
@@ -60,6 +61,8 @@ server.handle_timeout = types.MethodType(handle_timeout, server)
 server.addMsgHandler( "/live/tempo", bpm_callback )
 server.addMsgHandler( "/live/", default_callback )
 server.addMsgHandler( "/live/beat", default_callback)
+
+server.addMsgHandler( "/remix/error", error_callback)
 
 # user script that's called by the game engine every frame
 def each_frame():

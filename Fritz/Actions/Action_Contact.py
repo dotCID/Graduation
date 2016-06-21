@@ -97,11 +97,8 @@ class SpecificAction(Action):
     
     def getEnergyAvg(self):
         """ Simple function for shorter syntax """
-        if len(self.beatDataPoller.poll(0)) is not 0:
-            return self.beatDataChannel.recv_json()['s0_avg']
-        else:
-            return self.averageEnergy
-    
+        return self.beatDataChannel.recv_json()['s0_avg']
+        
     def getBeatData(self):
         """ Simple function for shorter syntax """
         '''if len(self.beatDataPoller.poll(0)) is not 0:
@@ -121,6 +118,8 @@ class SpecificAction(Action):
         msg = OSCMessage()
         msg.setAddress("/live/tempo")
         client.send(msg)
+        
+        # wait for response
         time.sleep(0.5)
         
         #receive response
@@ -140,10 +139,12 @@ class SpecificAction(Action):
         client.send(msg)
         if printing: print "Set BPM to",newBPM
         self.currBPM = newBPM
+        Action.BPM = self.currBPM # change the head bob bpm as well
             
     def adjustBPM(self):
         """ Adjust the BPM in Ableton according to the measured values """
         ediff = self.averageEnergy - self.localAvgEnergy
+        print "Average long energy: ",self.averageEnergy, " Short term:",self.localAvgEnergy
         print "ediff was", ediff
         
         bpmDifference = abs(round(ediff/10,0)*10)
@@ -156,9 +157,12 @@ class SpecificAction(Action):
             newBPM = oldBPM
             if ediff < 0:
                 newBPM = oldBPM + bpmDifference
+                self.pedalResponse("up") # Communicate to Action that a response should be given
             else:
                 newBPM = oldBPM - bpmDifference
+                self.pedalResponse("down") # Communicate to Action that a response should be given
             print "newBPM: ",newBPM
+
             self.setBPM(newBPM)
                 
             
@@ -172,25 +176,30 @@ class SpecificAction(Action):
         #if self.loopCheck() == EXIT_CODE_DONE:
         #    return EXIT_CODE_DONE
         
-        if self.averageEnergy is None:
-            self.averageEnergy = self.getEnergyAvg()
+        if not self.done(self.currentPosition(), Action.contact_joint_positions):
+            if printing: print "Action_Contact: Moving to look at pedal user"
+            self.move(Action.contact_joint_positions)
+            return EXIT_CODE_SELF
         else:
-            # calculate BPM over given interval
-            if self.energy_calc_start is None:
-                self.energy_calc_start = self.millis()
-                
-            if (self.millis() - self.energy_calc_start) < (ENERGY_CALC_TIME-1) * 1000:
-                self.energyVals.append(self.getBeatData()['s0'])
-                print "calculating energy (",self.millis() - self.energy_calc_start, ")"
+            if self.averageEnergy is None:
+                self.averageEnergy = self.getEnergyAvg()
             else:
-                self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
-                print "last average energy was ",self.localAvgEnergy
-                self.adjustBPM()
-                
-                # clear old values
-                self.energyVals = []
-                self.energy_calc_start = None
-                
-                return EXIT_CODE_DONE
+                # calculate BPM over given interval
+                if self.energy_calc_start is None:
+                    self.energy_calc_start = self.millis()
+                    
+                if (self.millis() - self.energy_calc_start) < (ENERGY_CALC_TIME-1) * 1000:
+                    self.energyVals.append(self.getBeatData()['s0'])
+                    print "calculating energy (",self.millis() - self.energy_calc_start, ")"
+                else:
+                    self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
+                    self.adjustBPM()
+                    
+                    # clear old values
+                    self.energyVals = []
+                    self.energy_calc_start = None
+                    self.averageEnergy = None
+                    
+                    return EXIT_CODE_DONE
             
-        return EXIT_CODE_SELF
+            return EXIT_CODE_SELF
