@@ -1,4 +1,5 @@
 #!/bin/bash
+# this opens all sensors if executed from an Ubuntu gnome-terminal instance
 
 gnome-terminal -x python controlBox.py
 
