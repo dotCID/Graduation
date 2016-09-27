@@ -13,6 +13,8 @@ If you have pip installed, simply use
 ```
 sudo pip install zmq
 sudo pip install pyserial
+sudo pip install numpy
+sudo pip install scipy
 sudo pip install https://pypi.python.org/packages/7c/e4/6abb118cf110813a7922119ed0d53e5fe51c570296785ec2a39f37606d85/pyOSC-0.3.5b-5294.tar.gz#md5=ea027aae543aad2ecf7ae51c2a6b6626
 ```
 pip sometimes has an issue finding pyOSC, hence the long url.
