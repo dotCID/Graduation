@@ -87,6 +87,7 @@ oldPedalState = None
 
 ## Actions
 ''' **** NOTE THAT THESE MUST HAVE THE SAME INDEX IN THIS ARRAY AS THEIR NORMAL EXIT CODE **** '''
+print "Setting up Actions.. \n"
 actions = [
             Action.Action(), # to prevent confusion this is a spacer
             Action_Contact.SpecificAction(),
@@ -95,6 +96,8 @@ actions = [
             Action_Stevie.SpecificAction(),
             Action_Bored.SpecificAction()
           ]
+          
+print "\nAction setup done."
 
 ## Helper Functions
 """Arduino-style millis() function for timekeeping"""
@@ -176,21 +179,18 @@ def randomSelectC():
 
 def getPedalState():
     """
-    Gets the current state of the foot pedal
+    Gets the current state of the foot pedal (last message, regardless of age)
     """
-    global oldPedalState
-    if len(pedPoller.poll(0)) is not 0:
-        pedData = pedChannel.recv_json()
-    
-        return pedData['state']
-    else: return oldPedalState
+    pedData = pedChannel.recv_json()
+    return pedData['state']
 
 #############################################################
 #                   RUNNING CODE BELOW                      #
 #############################################################
+print "Running program.\n"
 
 waiting = True
-dead = False
+dead = True
 
 oldPedalState = getPedalState()
 
@@ -241,10 +241,10 @@ while True:
         continue
         
     ## Support for foot pedal:
-    elif getPedalState() != oldPedalState:
-        oldPedalState = getPedalState()
+    elif(getPedalState() != oldPedalState):
         if printing: print "Foot pedal was pressed!"
-        exit_code = actions[2].execute()
+        oldPedalState = getPedalState()
+        exit_code = actions[1].execute_reset()
         continue
         
     ## Check whether we need to consult the camera for unexpected contact

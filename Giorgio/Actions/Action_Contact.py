@@ -71,6 +71,7 @@ class SpecificAction(Action):
     averageEnergy = None
     localAvgEnergy = 0.0
     energy_calc_start = None
+    energy_calc_finished = False
     energyVals = []
     beatData = {
                 't'     : 0,
@@ -104,18 +105,19 @@ class SpecificAction(Action):
     def getBeatData(self):
         """ Simple function for shorter syntax """
         if len(self.beatDataPoller.poll(0)) is not 0:
-            return self.beatDataChannel.recv_json()
-        else:
-            return self.beatData
+            self.beatData = self.beatDataChannel.recv_json()
+        return self.beatData
     
     def getBPM(self):
-        """ Simple function for shorter syntax """
-        if len(self.bpmPoller.poll(0)) is not 0:
-            return self.bpmChannel.recv_json()['bpm']
-        else:
-            return self.currBPM
+        """ Simple function for shorter syntax, gets last known BPM"""
+        client = OSCClient()
+        client.connect((OSC_ABLETON_IP, 9000))
+        msg = OSCMessage()
+        msg.setAddress("/live/tempo")
+        client.send(msg)
+        return self.bpmChannel.recv_json()['bpm']
             
-    def setBPM(self, newBPM):
+    def setBPM(self, oldBPM, newBPM):
         """ Sets the BPM in Ableton """
         client = OSCClient()
         client.connect((OSC_ABLETON_IP, 9000))
@@ -123,7 +125,7 @@ class SpecificAction(Action):
         msg.setAddress("/live/tempo")
         msg.append(newBPM)
         client.send(msg)
-        if printing: print "Set BPM to",newBPM
+        if printing: print "Set BPM from ",oldBPM,"to",newBPM
             
     def adjustBPM(self):
         """ Adjust the BPM in Ableton according to the measured values """
@@ -132,13 +134,28 @@ class SpecificAction(Action):
         if abs(ediff) > THRESHOLD_EDIFF:
             oldBPM = self.getBPM()
             newBPM = oldBPM
-            if ediff > 0:
+            if ediff < 0:
                 newBPM = oldBPM + BPM_DIFF
             else:
                 newBPM = oldBPM - BPM_DIFF
-            self.setBPM(newBPM)
+            self.setBPM(oldBPM, newBPM)
+            print "BPM change made; ediff was", ediff, " (Threshold: ",THRESHOLD_EDIFF,")"
+        else:
+            print "No BPM change made; ediff was", ediff, " (Threshold: ",THRESHOLD_EDIFF,")"
+        #reset the responsible variables
+        self.energyVals = []
                 
-            
+
+    def execute_reset(self):      
+        """
+        In case of a footpedal interrupt, resets all values and executes normal loop
+        """            
+        self.energy_calc_start = None
+        self.energyVals = []
+        self. energy_calc_finished = False
+        
+        return self.execute()
+        
     def execute(self,loops = 500):
         """
         Main executing method of this Action.
@@ -149,18 +166,21 @@ class SpecificAction(Action):
         #if self.loopCheck() == EXIT_CODE_DONE:
         #    return EXIT_CODE_DONE
         
-        if self.averageEnergy is None:
+        # calculate BPM over given interval
+        if self.energy_calc_start is None:
+            print "Starting energy calculation"
+            
             self.averageEnergy = self.getEnergyAvg()
-        else:
-            # calculate BPM over given interval
-            if self.energy_calc_start is None:
-                self.energy_calc_start is Action.millis()
-                
-            if Action.millis() - self.energy_calc_start < ENERGY_CALC_TIME * 1000:
-                self.energyVals.append(self.getBeatData()['s0'])
-            else:
-                self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
-                self.adjustBPM()
+            print "Average long term Energy is ",self.averageEnergy
+            self.energy_calc_start = Action.millis(self)
+            
+        if not self.energy_calc_finished and Action.millis(self) - self.energy_calc_start < ENERGY_CALC_TIME * 1000:
+            self.energyVals.append(self.getBeatData()['s0'])
+        elif not self.energy_calc_finished:
+            self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
+            print "\nEnergy calculation complete.", self.localAvgEnergy
+            self.energy_calc_finished = True
+            self.adjustBPM()
             
         self.targetData = self.getTargetData()
         if self.targetData['found']:
@@ -177,12 +197,17 @@ class SpecificAction(Action):
             return EXIT_CODE_SELF
             
         elif not self.done(self.currentPosition(), Action.contact_joint_positions):
-            if printing: print "Action_Contact: Moving to last known contact position"
+           # if printing: print "Action_Contact: Moving to last known contact position"
             self.move(Action.contact_joint_positions)
             return EXIT_CODE_SELF
             
+        elif not self.energy_calc_finished:
+            return EXIT_CODE_SELF
         else:
             if printing: print "Action_Contact: Target lost, scanning"
+            # Only reset this when done
+            self.energy_calc_start = None
+            self.energy_calc_finished = False
             return EXIT_CODE_SCAN
             
         return EXIT_CODE_SELF

@@ -269,28 +269,31 @@ while True:
             history_phase.pop(0)
             phase_at_zero = int(numpy.median(history_phase))
         
+        #MCW: Not interested in whether there was a beat, just in the s0
+   
+        # MCW: add s0 to the list, compute average
+        s0_list = listShift(s0_list, s[0])
+        s0_avg = sum(s0_list) / s0_list_length
+                
+        msg = {
+            't'      : millis(),
+            'f0'     : f0,
+            's0'     : s[0],
+            's0_avg' : s0_avg,
+            'bpm'    : BPM,
+            'beat'   : True
+        }
+        last_beat = current_sample_num
+        
         # Should we beat now? Just prevent two beats close together.
         if samples_per_beat is not 0:
             if (current_sample_num % samples_per_beat) == 0 \
-              and current_sample_num > last_beat + .8*samples_per_beat \
-              and s[0] > S_THRESHOLD:
+              and current_sample_num > last_beat + .8*samples_per_beat:
 
                 beatTimes = listShift(beatTimes, millis())
                 BPM = computeBPM()            
                                 
-                # MCW: add s0 to the list, compute average
-                s0_list = list_shift(s0_list, s[0])
-                s0_avg = sum(s0_list) / s0_list_length
-                        
-                msg = {
-                    't'      : millis(),
-                    'f0'     : f0,
-                    's0'     : s[0],
-                    's0_avg' : s0_avg,
-                    'bpm'    : BPM,
-                    'beat'   : True
-                }
-                last_beat = current_sample_num
+                
             
         # MCW: Send message
         print "Sent beatData: ", 

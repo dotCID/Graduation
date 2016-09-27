@@ -8,7 +8,7 @@ import sys
 sys.path.insert(0,'..')
 
 from OSC import OSCServer
-from time import sleep
+import time
 from globalVars import CHANNEL_BPM
 
 import zmq
@@ -20,9 +20,11 @@ context = zmq.Context()
 socket = context.socket(zmq.PUB)
 socket.bind(CHANNEL_BPM)
 
-server = OSCServer( ('145.94.194.158', 9001) )
+server = OSCServer( ('145.94.192.23', 9001) )
 server.timeout = 0
 run = True
+
+beatNo = 0
 
 
 #Arduino-style millis() function for timekeeping
@@ -35,6 +37,9 @@ def handle_timeout(self):
     self.timed_out = True
 
 def default_callback(path, tags, args, source):
+    return
+    
+def beat_callback(path, tags, args, source):
     return
     
 def bpm_callback(path, tags, args, source):
@@ -52,6 +57,7 @@ import types
 server.handle_timeout = types.MethodType(handle_timeout, server)
 
 server.addMsgHandler( "/live/tempo", bpm_callback )
+server.addMsgHandler( "/live/beat", beat_callback )
 server.addMsgHandler( "/live/", default_callback )
 
 # user script that's called by the game engine every frame
