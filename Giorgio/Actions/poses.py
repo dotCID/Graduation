@@ -1,12 +1,12 @@
 """
 This file is a database of all poses Eddie uses. Consolidated into one file for easier changing and debugging.
 """
-
+# Format:       (  BH ,   BV  ,  TV  )
 
 ## Defaults
 pos_default    = (170.0,  30.0,  75.0)
-pos_min        = ( 10.0,  10.0,  20.0)
-pos_max        = (170.0, 160.0, 160.0)
+pos_min        = (  0.0,  10.0,  20.0)
+pos_max        = (180.0, 160.0, 160.0)
 
 ## For playing dead
 pos_dead       = (170, 30, 75 )
