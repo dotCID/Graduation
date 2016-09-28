@@ -188,7 +188,7 @@ def getPedalState():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
-exit_code = 0 # start without movement
+exit_code = -2 # start without movement
 waiting = False
 dead = False
 

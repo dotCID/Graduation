@@ -16,7 +16,7 @@ CHANNEL_IMU_RAWPOS  = "tcp://127.0.0.1:4008"
 CHANNEL_PEDAL       = "tcp://127.0.0.1:4009" # Current state of the foot pedal
 
 ## OSC Addresses
-OSC_ABLETON_IP      = "145.94.156.193"
+OSC_ABLETON_IP      = "145.94.157.49"
 
 ## Arduinos 
 BOT_ARDUINO_ADDRESS = '/dev/ttyUSB0'
@@ -28,7 +28,7 @@ IMU_ARDUINO_BAUDRATE= 115200
 CONTROLBOX_ARDUINO_ADDRESS = '/dev/ttyACM3'
 CONTROLBOX_ARDUINO_BAUDRATE = 115200
 
-PEDAL_ARDUINO_ADDRESS = '/dev/ttyACM0'
+PEDAL_ARDUINO_ADDRESS = '/dev/ttyACM3'
 PEDAL_ARDUINO_BAUDRATE = 115200
 
 ## Camera
@@ -48,10 +48,10 @@ EXIT_CODE_BORED    = 5
 
 ## Margins and Thresholds
 MARGIN_USER_CONTACT = 30.0
-THRESHOLD_EDIFF     = 10.0    # Energy difference in movement needed for BPM adjustment
-ENERGY_CALC_TIME    = 5.0     # Seconds over which user input on BPM adjustment is counted
+THRESHOLD_EDIFF     = 5.0    # Energy difference in movement needed for BPM adjustment
+ENERGY_CALC_TIME    = 8.0     # Seconds over which user input on BPM adjustment is counted
 ENERGY_AVG_LENGTH   = 400     # Amount of samples over which comparable energy is taken ( 100 samples =~ 5 seconds)
-BPM_DIFF            = 30.0    # Maximum BPM shift if user input was detected
+BPM_DIFF            = 5.0    # Maximum BPM shift if user input was detected
 MAX_PED_RESP_TIME   = 5.0     # How long the beat mod is a response to user input
 
 
