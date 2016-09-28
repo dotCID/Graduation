@@ -9,7 +9,7 @@ import zmq, time, math, random, sys
 from Actions import Action
 from Actions import Action_Contact
 from Actions import Action_Scan
-from Actions import Action_Focus
+from Actions import Action_Acknowledge
 from Actions import Action_Stevie
 from Actions import Action_Bored
 
@@ -30,7 +30,7 @@ from globalVars import EXIT_CODE_ERROR
 
 from globalVars import EXIT_CODE_CONTACT
 from globalVars import EXIT_CODE_SCAN
-from globalVars import EXIT_CODE_FOCUS
+from globalVars import EXIT_CODE_ACK
 from globalVars import EXIT_CODE_STEVIE
 from globalVars import EXIT_CODE_BORED
 
@@ -91,7 +91,7 @@ actions = [
             Action.Action(), # to prevent confusion this is a spacer
             Action_Contact.SpecificAction(),
             Action_Scan.SpecificAction(),
-            Action_Focus.SpecificAction(),
+            Action_Acknowledge.SpecificAction(),
             Action_Stevie.SpecificAction(),
             Action_Bored.SpecificAction()
           ]
@@ -117,10 +117,9 @@ targetData   = {
 energyData   = {
                 't'        : millis(),
                 'energy'   : 0.0,
-                'eg_label' : "none"
+                'eg_label' : "low"
                }
 
-exit_code = -2 # start without movement
 
 def randomSelect(chances, modes):
     """
@@ -157,10 +156,10 @@ def randomSelectA():
 def randomSelectB():
     """
     Selects an action from set B (low energy).
-    @return: the return code {2, 3 or 4} of the next action
+    @return: the return code {2, or 4} of the next action
     """
-    chances = (0.0, 0.3, 0.1, 0.6, 0.0)
-    modes   = ("0", "B", "B", "B", "0")
+    chances = (0.0, 0.4, 0.0, 0.6, 0.0)
+    modes   = ("0", "B", "0", "B", "0")
     
     return randomSelect(chances, modes)
 
@@ -189,7 +188,8 @@ def getPedalState():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
-waiting = True
+exit_code = -2 # start without movement
+waiting = False
 dead = False
 
 oldPedalState = getPedalState()
@@ -241,10 +241,12 @@ while True:
         continue
         
     ## Support for foot pedal:
-    elif getPedalState() != oldPedalState:
-        oldPedalState = getPedalState()
+    pedalState = getPedalState()
+    if pedalState != oldPedalState:
         if printing: print "Foot pedal was pressed!"
-        exit_code = actions[2].execute()
+        print "old:", oldPedalState, " new:", pedalState
+        oldPedalState = pedalState
+        exit_code = actions[1].execute()
         continue
         
     ## Check whether we need to consult the camera for unexpected contact
@@ -288,6 +290,9 @@ while True:
     else:
         # if an Action returns anything other than EXIT_CODE_DONE we follow their advice:
         #if printing: print "Continuing ", exit_code
-        exit_code = actions[exit_code].execute(250)
+        if exit_code == EXIT_CODE_ACK:
+            exit_code = actions[exit_code].execute(450)
+        else:
+            exit_code = actions[exit_code].execute(250)
 
         continue

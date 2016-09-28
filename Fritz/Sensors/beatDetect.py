@@ -44,6 +44,8 @@ from time import sleep
 
 from globalVars import CHANNEL_BEATDATA
 from globalVars import CHANNEL_IMU_RAWACCEL
+
+from globalVars import ENERGY_AVG_LENGTH
 import time, zmq
 
 # Configuration: How often should we re-estimate the sample
@@ -103,10 +105,9 @@ beatTimes = range(10)
 # MCW: Threshold above which beats 'count':
 S_THRESHOLD = 1.0
 
-# MCW: Average s0 over past 400 measurements (~20 seconds)
-s0_list_length = 400
-s0_list = [0]*s0_list_length
-s0_avg = 0.0
+# MCW: Average s0 over past measurements
+s0_list = [40]*ENERGY_AVG_LENGTH
+s0_avg = 40.0
 
 # MCW: BPM computation
 def computeBPM():
@@ -240,6 +241,10 @@ while True:
         history_f0.append(f0)
         history_f0.pop(0)
         f0 = numpy.mean(history_f0)
+        
+        # MCW: add s0 to the list, compute average
+        s0_list = listShift(s0_list, s[0])
+        s0_avg = sum(s0_list) / len(s0_list)
 
         msg = {
                     't'      : millis(),
@@ -277,10 +282,6 @@ while True:
 
                 beatTimes = listShift(beatTimes, millis())
                 BPM = computeBPM()            
-                                
-                # MCW: add s0 to the list, compute average
-                s0_list = list_shift(s0_list, s[0])
-                s0_avg = sum(s0_list) / s0_list_length
                         
                 msg = {
                     't'      : millis(),

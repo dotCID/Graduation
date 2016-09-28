@@ -23,6 +23,7 @@ with open("./orientationDataLog.txt", "r") as f:
         if len(item)>1:
             if item[0] == "{":
                 socket.send_json(item)
+                print item
             else:
                 print "Playing back data from",item
         sleep(0.05)

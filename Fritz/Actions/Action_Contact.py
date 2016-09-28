@@ -9,6 +9,7 @@ from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
 from globalVars import EXIT_CODE_SCAN
 from globalVars import EXIT_CODE_CONTACT
+from globalVars import EXIT_CODE_ACK
 
 EXIT_CODE_SELF = EXIT_CODE_CONTACT
 
@@ -24,10 +25,13 @@ from OSC import OSCMessage
 from globalVars import OSC_ABLETON_IP
 
 ## Other
+import time
 from globalVars import printing
 from globalVars import THRESHOLD_EDIFF
 from globalVars import ENERGY_CALC_TIME
 from globalVars import BPM_DIFF
+
+from poses import contact_joint_positions
 
 class SpecificAction(Action):
 
@@ -96,24 +100,17 @@ class SpecificAction(Action):
     
     def getEnergyAvg(self):
         """ Simple function for shorter syntax """
-        if len(self.beatDataPoller.poll(0)) is not 0:
-            return self.beatDataChannel.recv_json()['s0_avg']
-        else:
-            return self.averageEnergy
-    
+        return self.beatDataChannel.recv_json()['s0_avg']
+        
     def getBeatData(self):
         """ Simple function for shorter syntax """
-        if len(self.beatDataPoller.poll(0)) is not 0:
+        '''if len(self.beatDataPoller.poll(0)) is not 0:
             return self.beatDataChannel.recv_json()
         else:
             return self.beatData
-    
-    def getBPM(self):
-        """ Simple function for shorter syntax """
-        if len(self.bpmPoller.poll(0)) is not 0:
-            return self.bpmChannel.recv_json()['bpm']
-        else:
-            return self.currBPM
+        '''
+        #above would output so many 0's that it skewed results, better to use blocking than a poller
+        return self.beatDataChannel.recv_json()
             
     def setBPM(self, newBPM):
         """ Sets the BPM in Ableton """
@@ -124,18 +121,31 @@ class SpecificAction(Action):
         msg.append(newBPM)
         client.send(msg)
         if printing: print "Set BPM to",newBPM
+        self.currBPM = newBPM
+        Action.BPM = self.currBPM # change the head bob bpm as well
             
     def adjustBPM(self):
         """ Adjust the BPM in Ableton according to the measured values """
         ediff = self.averageEnergy - self.localAvgEnergy
+        print "Average long energy: ",self.averageEnergy, " Short term:",self.localAvgEnergy
+        print "ediff was", ediff
+        
+        bpmDifference = abs(round(ediff/10,0)*10)
+        
+        if bpmDifference > BPM_DIFF:
+            bpmDifference = BPM_DIFF
         
         if abs(ediff) > THRESHOLD_EDIFF:
-            oldBPM = self.getBPM()
+            oldBPM = self.getBPM(self.currBPM)
             newBPM = oldBPM
-            if ediff > 0:
-                newBPM = oldBPM + BPM_DIFF
+            if ediff < 0:
+                newBPM = oldBPM + bpmDifference
+                self.pedalResponse("up") # Communicate to Action that a response should be given
             else:
-                newBPM = oldBPM - BPM_DIFF
+                newBPM = oldBPM - bpmDifference
+                self.pedalResponse("down") # Communicate to Action that a response should be given
+            print "newBPM: ",newBPM
+
             self.setBPM(newBPM)
                 
             
@@ -149,40 +159,30 @@ class SpecificAction(Action):
         #if self.loopCheck() == EXIT_CODE_DONE:
         #    return EXIT_CODE_DONE
         
-        if self.averageEnergy is None:
-            self.averageEnergy = self.getEnergyAvg()
+        if not self.done(self.currentPosition(), contact_joint_positions):
+            if printing: print "Action_Contact: Moving to look at pedal user"
+            self.move(contact_joint_positions)
+            return EXIT_CODE_SELF
         else:
-            # calculate BPM over given interval
-            if self.energy_calc_start is None:
-                self.energy_calc_start is Action.millis()
-                
-            if Action.millis() - self.energy_calc_start < ENERGY_CALC_TIME * 1000:
-                self.energyVals.append(self.getBeatData()['s0'])
+            if self.averageEnergy is None:
+                self.averageEnergy = self.getEnergyAvg()
             else:
-                self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
-                self.adjustBPM()
+                # calculate BPM over given interval
+                if self.energy_calc_start is None:
+                    self.energy_calc_start = self.millis()
+                    
+                if (self.millis() - self.energy_calc_start) < (ENERGY_CALC_TIME-1) * 1000:
+                    self.energyVals.append(self.getBeatData()['s0'])
+                    print "calculating energy (",self.millis() - self.energy_calc_start, ")"
+                else:
+                    self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
+                    self.adjustBPM()
+                    
+                    # clear old values
+                    self.energyVals = []
+                    self.energy_calc_start = None
+                    self.averageEnergy = None
+                    
+                    return EXIT_CODE_ACK
             
-        self.targetData = self.getTargetData()
-        if self.targetData['found']:
-            if printing: print "Action_Contact: Found target. Following."
-            deg_x = -self.targetData['tar_dg']['x'] 
-            deg_y = -self.targetData['tar_dg']['y']
-            findTime = self.targetData['findTime']
-            
-            print "Action_Contact: adjustment: ", deg_x, deg_y
-            
-            pos = self.currentPosition()
-            newpos = (pos[0] + deg_x, pos[1], pos[2] + deg_y)
-            self.move(newpos)
             return EXIT_CODE_SELF
-            
-        elif not self.done(self.currentPosition(), Action.contact_joint_positions):
-            if printing: print "Action_Contact: Moving to last known contact position"
-            self.move(Action.contact_joint_positions)
-            return EXIT_CODE_SELF
-            
-        else:
-            if printing: print "Action_Contact: Target lost, scanning"
-            return EXIT_CODE_SCAN
-            
-        return EXIT_CODE_SELF
