@@ -24,6 +24,7 @@ from globalVars import printing
 ## Poses
 from poses import scan_pos_L
 from poses import scan_pos_R
+from poses import contact_joint_positions
 
 millis = lambda: int(round(time.time() * 1000))
 
@@ -87,7 +88,7 @@ class SpecificAction(Action):
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
-        global targetData
+        global targetData, contact_joint_positions
         # the general max speed is a bit high here
         self.maxV = 1.00
         
@@ -100,7 +101,7 @@ class SpecificAction(Action):
         targetData = self.getTargetData()
         if targetData['found']:
             print "Action_Scan: Found target"
-            Action.contact_joint_positions = self.currentPosition()
+            contact_joint_positions = self.currentPosition()
             movementData = self.getMovementData()
             Action.user_contact_angles = movementData
             self.tried_last_loc = False
@@ -116,7 +117,7 @@ class SpecificAction(Action):
                     self.pos_target = scan_pos_L
                     print "Target was to my left"
                 self.tried_last_loc = True
-            if self.done(self.pos_target, Action.contact_joint_positions):
+            if self.done(self.pos_target, contact_joint_positions):
                 rd = random.random()
                 if rd > 0.5:
                     self.pos_target = scan_pos_L

@@ -44,6 +44,8 @@ from time import sleep
 
 from globalVars import CHANNEL_BEATDATA
 from globalVars import CHANNEL_IMU_RAWACCEL
+
+from globalVars import ENERGY_AVG_LENGTH
 import time, zmq
 
 # Configuration: How often should we re-estimate the sample
@@ -103,10 +105,9 @@ beatTimes = range(10)
 # MCW: Threshold above which beats 'count':
 S_THRESHOLD = 1.0
 
-# MCW: Average s0 over past 400 measurements (~20 seconds)
-s0_list_length = 400
-s0_list = [0]*s0_list_length
-s0_avg = 0.0
+# MCW: Average s0 over past measurements
+s0_list = [40]*ENERGY_AVG_LENGTH
+s0_avg = 40.0
 
 # MCW: BPM computation
 def computeBPM():
@@ -240,6 +241,10 @@ while True:
         history_f0.append(f0)
         history_f0.pop(0)
         f0 = numpy.mean(history_f0)
+        
+        # MCW: add s0 to the list, compute average
+        s0_list = listShift(s0_list, s[0])
+        s0_avg = sum(s0_list) / len(s0_list)
 
         msg = {
                     't'      : millis(),
@@ -269,31 +274,24 @@ while True:
             history_phase.pop(0)
             phase_at_zero = int(numpy.median(history_phase))
         
-        #MCW: Not interested in whether there was a beat, just in the s0
-   
-        # MCW: add s0 to the list, compute average
-        s0_list = listShift(s0_list, s[0])
-        s0_avg = sum(s0_list) / s0_list_length
-                
-        msg = {
-            't'      : millis(),
-            'f0'     : f0,
-            's0'     : s[0],
-            's0_avg' : s0_avg,
-            'bpm'    : BPM,
-            'beat'   : True
-        }
-        last_beat = current_sample_num
-        
         # Should we beat now? Just prevent two beats close together.
         if samples_per_beat is not 0:
             if (current_sample_num % samples_per_beat) == 0 \
-              and current_sample_num > last_beat + .8*samples_per_beat:
+              and current_sample_num > last_beat + .8*samples_per_beat \
+              and s[0] > S_THRESHOLD:
 
                 beatTimes = listShift(beatTimes, millis())
                 BPM = computeBPM()            
-                                
-                
+                        
+                msg = {
+                    't'      : millis(),
+                    'f0'     : f0,
+                    's0'     : s[0],
+                    's0_avg' : s0_avg,
+                    'bpm'    : BPM,
+                    'beat'   : True
+                }
+                last_beat = current_sample_num
             
         # MCW: Send message
         print "Sent beatData: ", 
