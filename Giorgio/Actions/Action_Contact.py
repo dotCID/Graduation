@@ -30,6 +30,8 @@ import time
 from globalVars import printing
 from globalVars import THRESHOLD_EDIFF
 from globalVars import ENERGY_CALC_MEASURES
+from globalVars import BPM_SHIFT_WAIT_MEASURES
+from globalVars import BPM_SHIFT_CNTDWN_MEASURES
 from globalVars import BPM_DIFF
 
 from poses import contact_joint_positions
@@ -93,6 +95,9 @@ class SpecificAction(Action):
                 'beat'  : False
                }
     currBPM = 120.0
+    BPMAdjustment = 0
+    adjustmentConfirmed = False
+    countDownAnimStarted = False
     
     findTime = 0
     deg_x = 0.0
@@ -135,8 +140,8 @@ class SpecificAction(Action):
         self.currBPM = newBPM
         Action.BPM = self.currBPM # change the head bob bpm as well
             
-    def adjustBPM(self):
-        """ Adjust the BPM in Ableton according to the measured values """
+    def calcAdjustBPM(self):
+        """ Calculate the BPM adjustment """
         ediff = self.averageEnergy - self.localAvgEnergy
         print "Average long energy: ",self.averageEnergy, " Short term:",self.localAvgEnergy
         print "ediff was", ediff
@@ -147,17 +152,14 @@ class SpecificAction(Action):
             bpmDifference = BPM_DIFF
         
         if abs(ediff) > THRESHOLD_EDIFF:
-            oldBPM = self.getBPM(self.currBPM)
-            newBPM = oldBPM
             if ediff < 0:
-                newBPM = oldBPM + bpmDifference
-                self.pedalResponse("up") # Communicate to Action that a response should be given
+                return bpmDifference
             else:
-                newBPM = oldBPM - bpmDifference
-                self.pedalResponse("down") # Communicate to Action that a response should be given
-            print "newBPM: ",newBPM
+                return bpmDifference * -1
 
-            self.setBPM(newBPM)
+        print "Difference was too small."
+        return 0
+        
                 
             
     def execute(self,loops = 500):
@@ -195,14 +197,52 @@ class SpecificAction(Action):
                     beat = self.getBeat()["num"]
                     
                     # Append energy when the required amount of beats has not been reached yet
-                    if not (beat / 4.0) - (self.startBeat / 4.0) >= ENERGY_CALC_MEASURES:
+                    if (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES:
                         self.energyVals.append(self.getBeatData()['s0'])
                         print "calculating energy (",self.millis() - self.energy_calc_start, ")", beat
+                    
+                    # Then confirm
+                    elif (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES + BPM_SHIFT_WAIT_MEASURES:
+                        if not self.adjustmentConfirmed:
+                            self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
+                            self.BPMAdjustment = self.calcAdjustBPM()
+                            # BPM up/down animation  
+                            if self.BPMAdjustment > 0:
+                                print "BPM will go up"
+                                self.pedalResponse("up") # Communicate to Action that a response should be given
+                                aI.bpmUp()
+                            elif self.BPMAdjustment < 0:
+                                print "BPM will go down"
+                                self.pedalResponse("down") # Communicate to Action that a response should be given
+                                aI.bpmDown()
+                            else:
+                                print "BPM stays unchanged"
+                                aI.bpmSame()
+                            self.adjustmentConfirmed = True
+                            
+                    # Count down and change
+                    elif (beat / 4.0) - (self.startBeat / 4.0) < ENERGY_CALC_MEASURES + BPM_SHIFT_WAIT_MEASURES + BPM_SHIFT_CNTDWN_MEASURES:
+                        if not self.countDownAnimStarted:
+                            # BPM countdown animation                            
+                            LEDDelay = 60000.0 / self.getBPM(self.currBPM)
+                            
+
+                            if self.BPMAdjustment > 0:                        
+                                print "Starting countup animation", LEDDelay, beat
+                                aI.bpmCountUp(LEDDelay)
+                            elif self.BPMAdjustment < 0:
+                                print "Starting countdown animation", LEDDelay, beat
+                                aI.bpmCountDown(LEDDelay)
+                                
+                            self.countDownAnimStarted = True
+                    # Adjust BPM
                     else:
-                        self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
-                        self.adjustBPM()
+                        print "Applying adjustment.", beat
+                        self.setBPM(self.currBPM + self.BPMAdjustment)
                         
                         # clear old values
+                        self.adjustmentConfirmed = False
+                        self.countDownAnimStarted = False
                         self.energyVals = []
                         self.energy_calc_start = None
                         self.averageEnergy = None

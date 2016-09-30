@@ -48,12 +48,14 @@ EXIT_CODE_BORED    = 5
 
 
 ## Margins and Thresholds
-MARGIN_USER_CONTACT = 30.0
-THRESHOLD_EDIFF     = 5.0     # Energy difference in movement needed for BPM adjustment
-ENERGY_CALC_MEASURES= 2.0     # Measures over which user input on BPM adjustment is counted
-ENERGY_AVG_LENGTH   = 400     # Amount of samples over which comparable energy is taken ( 100 samples =~ 5 seconds)
-BPM_DIFF            = 5.0     # Maximum BPM shift if user input was detected
-MAX_PED_RESP_TIME   = 5.0     # How long the beat mod is a response to user input
+MARGIN_USER_CONTACT         = 30.0
+THRESHOLD_EDIFF             = 5.0     # Energy difference in movement needed for BPM adjustment
+ENERGY_CALC_MEASURES        = 2.0     # Measures over which user input on BPM adjustment is counted
+BPM_SHIFT_WAIT_MEASURES     = 1.0     # Wait for this amount of measures to change BPM
+BPM_SHIFT_CNTDWN_MEASURES   = 1.0     # Count down over this amount of measures
+ENERGY_AVG_LENGTH           = 400     # Amount of samples over which comparable energy is taken ( 100 samples =~ 5 seconds)
+BPM_DIFF                    = 5.0     # Maximum BPM shift if user input was detected
+MAX_PED_RESP_TIME           = 5.0     # How long the beat mod is a response to user input
 
 
 ## Debug values

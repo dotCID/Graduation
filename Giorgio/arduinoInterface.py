@@ -61,3 +61,31 @@ def moveTo(joint_angles):
 def getAngles():
     """    Simply return the currently set joint angles.    """    
     return currAngles
+
+    
+def bpmSame():
+    """ Activates the "bpm will not change" animation """
+    arduino.write("bpmSame\n")
+    
+def bpmUp():
+    """ Activates the "bpm will go up" animation """
+    arduino.write("bpmUp\n")
+    
+def bpmDown():    
+    """ Activates the "bpm will go down" animation """
+    arduino.write("bpmDown\n")
+
+def bpmCountUp(delay):
+    """ 
+    Activates the "bpm will go up in .. " animation
+    @param int delay: determines the time between LEDs lighting
+    """
+    arduino.write("bpmAnimUp "+delay+"\n")
+
+def bpmCountDown(delay):
+    """ 
+    Activates the "bpm will go down in .. " animation
+    @param int delay: determines the time between LEDs lighting
+    """
+    arduino.write("bpmAnimDown "+delay+"\n")
+
