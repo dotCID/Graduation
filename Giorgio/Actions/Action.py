@@ -361,7 +361,8 @@ class Action:
         self.adaptToMode()
         
         pos = aI.getAngles() ## This is the new method of getting current joint data
-
+        print pos
+        
         self.calcBeatMod()
         """
         # modify the end pose with the beat
@@ -395,6 +396,7 @@ class Action:
             #if printing: print "Action: move: response:",r.strip('\r\n'), "\n"
         else:
             print "Action: move: Done moving."
+            return EXIT_CODE_DONE
     
     def loopCheck(self):
         """ 
@@ -433,7 +435,9 @@ class Action:
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
             return EXIT_CODE_DONE
-        self.move(self.pos_target)
+        mv = self.move(self.pos_target)
+        if mv == EXIT_CODE_DONE:
+            return EXIT_CODE_DONE
         return -1
         
     

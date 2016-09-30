@@ -9,11 +9,12 @@ CHANNEL_BEATDATA    = "tcp://127.0.0.1:4002" # Data on IMU beats
 CHANNEL_ENERGYDATA  = "tcp://127.0.0.1:4004" # Energy level from ControlBox
 CHANNEL_MODE        = "tcp://127.0.0.1:4005" # Movement mode
 CHANNEL_BPM         = "tcp://127.0.0.1:4006" # BPM from Ableton or ControlBox
+CHANNEL_BEAT        = "tcp://127.0.0.1:4007" # Beats sent out by Ableton (numbered by Ableton)
 
-CHANNEL_IMU_RAWACCEL= "tcp://127.0.0.1:4007"
-CHANNEL_IMU_RAWPOS  = "tcp://127.0.0.1:4008"
+CHANNEL_IMU_RAWACCEL= "tcp://127.0.0.1:4008"
+CHANNEL_IMU_RAWPOS  = "tcp://127.0.0.1:4009"
 
-CHANNEL_PEDAL       = "tcp://127.0.0.1:4009" # Current state of the foot pedal
+CHANNEL_PEDAL       = "tcp://127.0.0.1:4010" # Current state of the foot pedal
 
 ## OSC Addresses
 OSC_ABLETON_IP      = "192.168.1.72"
@@ -49,7 +50,7 @@ EXIT_CODE_BORED    = 5
 ## Margins and Thresholds
 MARGIN_USER_CONTACT = 30.0
 THRESHOLD_EDIFF     = 5.0     # Energy difference in movement needed for BPM adjustment
-ENERGY_CALC_TIME    = 8.0     # Seconds over which user input on BPM adjustment is counted
+ENERGY_CALC_MEASURES= 2.0     # Measures over which user input on BPM adjustment is counted
 ENERGY_AVG_LENGTH   = 400     # Amount of samples over which comparable energy is taken ( 100 samples =~ 5 seconds)
 BPM_DIFF            = 5.0     # Maximum BPM shift if user input was detected
 MAX_PED_RESP_TIME   = 5.0     # How long the beat mod is a response to user input

@@ -39,7 +39,7 @@ def arduinoWrite(val, i):
     if connected:
         global arduino
         arduino.write(jointNames[i] + " "+ str(val) +"\n")
-        response = arduino.readline()
+        response = arduino.readline()   # causes the movement to be rather slow, cause unknown
         return response
     
 def moveTo(joint_angles):

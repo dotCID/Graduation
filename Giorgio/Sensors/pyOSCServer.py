@@ -12,6 +12,7 @@ from OSC import OSCServer
 from OSC import OSCMessage
 from OSC import OSCClient
 from globalVars import CHANNEL_BPM
+from globalVars import CHANNEL_BEAT
 from globalVars import OSC_ABLETON_IP
 
 import zmq
@@ -22,6 +23,9 @@ sys.stdout.write("\x1b]2;Sensors/pyOSCServer.py\x07")
 context = zmq.Context()
 bpm_socket = context.socket(zmq.PUB)
 bpm_socket.bind(CHANNEL_BPM)
+
+beat_socket = context.socket(zmq.PUB)
+beat_socket.bind(CHANNEL_BEAT)
 
 # Get the current WiFi IP:
 OWN_IP = None
@@ -60,6 +64,11 @@ def default_callback(path, tags, args, source):
 
 def beat_callback(path,tags,args,source):
     print "Beat:",args
+    beat = {
+            't' : millis(),
+            'num':args[0]
+           }
+    beat_socket.send_json(beat)
     
 def bpm_callback(path, tags, args, source):
     print "BPM:",args[0]

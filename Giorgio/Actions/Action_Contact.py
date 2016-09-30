@@ -18,6 +18,7 @@ import zmq
 from globalVars import CHANNEL_TARGETDATA
 from globalVars import CHANNEL_BEATDATA
 from globalVars import CHANNEL_BPM
+from globalVars import CHANNEL_BEAT
 
 ## OSC
 from OSC import OSCClient
@@ -28,7 +29,7 @@ from globalVars import OSC_ABLETON_IP
 import time
 from globalVars import printing
 from globalVars import THRESHOLD_EDIFF
-from globalVars import ENERGY_CALC_TIME
+from globalVars import ENERGY_CALC_MEASURES
 from globalVars import BPM_DIFF
 
 from poses import contact_joint_positions
@@ -45,7 +46,6 @@ class SpecificAction(Action):
     targetPoller.register(targetChannel, zmq.POLLIN)
 
     # Beat Data channel:
-    context = zmq.Context()
     beatDataChannel = context.socket(zmq.SUB)
     beatDataChannel.setsockopt(zmq.CONFLATE, 1 )
     beatDataChannel.setsockopt(zmq.SUBSCRIBE, '')
@@ -54,13 +54,20 @@ class SpecificAction(Action):
     beatDataPoller.register(beatDataChannel, zmq.POLLIN)
 
     # BPM channel:
-    context = zmq.Context()
     bpmChannel = context.socket(zmq.SUB)
     bpmChannel.setsockopt(zmq.CONFLATE, 1 )
     bpmChannel.setsockopt(zmq.SUBSCRIBE, '')
     bpmChannel.connect(CHANNEL_BPM)
     bpmPoller = zmq.Poller()
     bpmPoller.register(bpmChannel, zmq.POLLIN)
+    
+    # Beat channel
+    beatChannel = context.socket(zmq.SUB)
+    beatChannel.setsockopt(zmq.CONFLATE,1 )
+    beatChannel.setsockopt(zmq.SUBSCRIBE, '')
+    beatChannel.connect(CHANNEL_BEAT)
+    beatPoller = zmq.Poller()
+    beatPoller.register(beatChannel, zmq.POLLIN)
    
     # Variables
     targetData_default = {
@@ -74,6 +81,7 @@ class SpecificAction(Action):
     
     averageEnergy = None
     localAvgEnergy = 0.0
+    startBeat = None
     energy_calc_start = None
     energyVals = []
     beatData = {
@@ -111,6 +119,9 @@ class SpecificAction(Action):
         '''
         #above would output so many 0's that it skewed results, better to use blocking than a poller
         return self.beatDataChannel.recv_json()
+        
+    def getBeat(self):
+        return self.beatChannel.recv_json()
             
     def setBPM(self, newBPM):
         """ Sets the BPM in Ableton """
@@ -168,21 +179,34 @@ class SpecificAction(Action):
                 self.averageEnergy = self.getEnergyAvg()
             else:
                 # calculate BPM over given interval
-                if self.energy_calc_start is None:
-                    self.energy_calc_start = self.millis()
+                
+                # but only from the start of a measure, assuming 4/4 timing
+                if self.startBeat is None:
+                    self.startBeat = self.getBeat()["num"]
+                
+                if self.startBeat%4!=0 and self.energy_calc_start is None:
+                    print "Waiting for measure to start",self.startBeat
+                    self.startBeat = None
+                    return EXIT_CODE_SELF
+                else:                    
+                    if self.energy_calc_start is None:
+                        self.energy_calc_start = self.millis()
                     
-                if (self.millis() - self.energy_calc_start) < (ENERGY_CALC_TIME-1) * 1000:
-                    self.energyVals.append(self.getBeatData()['s0'])
-                    print "calculating energy (",self.millis() - self.energy_calc_start, ")"
-                else:
-                    self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
-                    self.adjustBPM()
+                    beat = self.getBeat()["num"]
                     
-                    # clear old values
-                    self.energyVals = []
-                    self.energy_calc_start = None
-                    self.averageEnergy = None
-                    
-                    return EXIT_CODE_ACK
+                    # Append energy when the required amount of beats has not been reached yet
+                    if not (beat / 4.0) - (self.startBeat / 4.0) >= ENERGY_CALC_MEASURES:
+                        self.energyVals.append(self.getBeatData()['s0'])
+                        print "calculating energy (",self.millis() - self.energy_calc_start, ")", beat
+                    else:
+                        self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
+                        self.adjustBPM()
+                        
+                        # clear old values
+                        self.energyVals = []
+                        self.energy_calc_start = None
+                        self.averageEnergy = None
+                        
+                        return EXIT_CODE_ACK
             
             return EXIT_CODE_SELF
