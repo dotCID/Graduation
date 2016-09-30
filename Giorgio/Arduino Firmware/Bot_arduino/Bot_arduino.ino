@@ -15,6 +15,7 @@
 #define PXPAT_PULSE  0
 #define PXPAT_BPMUP  1
 #define PXPAT_BPMDW -1
+#define PXPAT_BPMSAME 2
 
 // Servo shield connection IDs for servos
 #define BH_ID  0
@@ -105,15 +106,21 @@ void loop(){
 /*
     A function to check whether a complete string  (i.e. one ending in \n) has been sent over the serial connection. It then responds accordingly.
   Possible commands:
-  start   -   Starts the motor actuation
-  stop    -   Stops motor actuation
-  home    -   Return to default angles
-  on      -   Turn LED 13 on
-  off     -   Turn LED 13 off
+  start         -   Starts the motor actuation
+  stop          -   Stops motor actuation
+  home          -   Return to default angles
+  on            -   Turn LED 13 on
+  off           -   Turn LED 13 off
   BH #.#
   BV #.#
   TH #.#
   TV #.#
+  bpmSame       -   Flash to indicate no change
+  bpmUp         -   Quick pattern up
+  bpmDown       -   Quick pattern down
+  bpmCountUp    -   Count up from the bottom LED
+  bpmCountDown  -   Count down from the top LED
+  undo          -   Clear input string
 */
 void readSerial(){
   while (Serial.available()) {
@@ -176,6 +183,26 @@ void readSerial(){
     }else if(inputString.indexOf("undo")!=-1){
         inputString = "";
         Serial.println(F("Cleared input string."));
+    }else if(inputString.startsWith("bpmSame")){
+        npx_currentPattern = PXPAT_PULSE;
+        npx_pulseDelay = 50;
+    }else if(inputString.startsWith("bpmUp")){
+        npx_currentPattern = PXPAT_BPMUP;
+        npx_pulseDelay = 100;
+    }else if(inputString.startsWith("bpmDown")){
+        npx_currentPattern = PXPAT_BPMDW;
+        npx_pulseDelay = 100;
+    }else if(inputString.startsWith("bpmCountUp")){
+        String val = inputString.substring(10,inputString.length());
+        int pxdelay = val.toInt();
+        npx_currentPattern = PXPAT_BPMUP;
+        npx_pulseDelay = pxdelay;
+    }else if(inputString.startsWith("bpmCountDown")){
+        String val = inputString.substring(12,inputString.length());
+        int pxdelay = val.toInt();
+        npx_currentPattern = PXPAT_BPMDW;
+        npx_pulseDelay = pxdelay;
+    
     }
     inputString = "";
   }
@@ -220,6 +247,7 @@ int npx_i = 0;
 void ledPattern(int pattern){
     if(!fullStop){
         if(pattern == PXPAT_PULSE){
+            npx_pulseDelay = 300;
             if(millis() - npx_timer > npx_pulseDelay){
                 if(npx_lit){
                     // turn all off
@@ -259,6 +287,7 @@ void ledPattern(int pattern){
                 }
             }else{
                 npx_i = 0;
+                npx_currentPattern = PXPAT_PULSE;
             }
         }else if(pattern == PXPAT_BPMDW){
             if(npx_i<PXGROUP){
@@ -283,6 +312,7 @@ void ledPattern(int pattern){
                 }
             }else{
                 npx_i = 0;
+                npx_currentPattern = PXPAT_PULSE;
             }
         }
         
