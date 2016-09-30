@@ -1,8 +1,6 @@
 #!/bin/bash
 # this opens all sensors if executed from an Ubuntu gnome-terminal instance
 
-gnome-terminal -x python controlBox.py
-
 gnome-terminal -x python simpleCV_3_noOutput.py
 
 gnome-terminal -x python beatDetect.py

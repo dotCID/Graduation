@@ -7,9 +7,12 @@ Based on the standard pyOSC example "knct_rcv.py" from https://github.com/ptone/
 import sys
 sys.path.insert(0,'..')
 
-from OSC import OSCServer
 import time
+from OSC import OSCServer
+from OSC import OSCMessage
+from OSC import OSCClient
 from globalVars import CHANNEL_BPM
+from globalVars import OSC_ABLETON_IP
 
 import zmq
 
@@ -42,6 +45,7 @@ except:
     while True:
         continue
 
+
 #Arduino-style millis() function for timekeeping
 millis = lambda: int(round(time.time() * 1000))
 
@@ -53,6 +57,9 @@ def handle_timeout(self):
 
 def default_callback(path, tags, args, source):
     return
+
+def beat_callback(path,tags,args,source):
+    print "Beat:",args
     
 def bpm_callback(path, tags, args, source):
     print "BPM:",args[0]
@@ -72,7 +79,7 @@ server.handle_timeout = types.MethodType(handle_timeout, server)
 
 server.addMsgHandler( "/live/tempo", bpm_callback )
 server.addMsgHandler( "/live/", default_callback )
-server.addMsgHandler( "/live/beat", default_callback)
+server.addMsgHandler( "/live/beat", beat_callback)
 
 server.addMsgHandler( "/remix/error", error_callback)
 
