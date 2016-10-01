@@ -5,7 +5,7 @@ Some global variables that should be kept centralised
 
 ## ZMQ channels used
 CHANNEL_TARGETDATA  = "tcp://127.0.0.1:4001" # Data on computer vision target
-CHANNEL_BEATDATA    = "tcp://127.0.0.1:4002" # Data on IMU beats
+CHANNEL_ACCELDATA   = "tcp://127.0.0.1:4002" # Data on IMU average acceleration
 CHANNEL_ENERGYDATA  = "tcp://127.0.0.1:4004" # Energy level from ControlBox
 CHANNEL_MODE        = "tcp://127.0.0.1:4005" # Movement mode
 CHANNEL_BPM         = "tcp://127.0.0.1:4006" # BPM from Ableton or ControlBox
@@ -53,7 +53,9 @@ THRESHOLD_EDIFF             = 5.0     # Energy difference in movement needed for
 ENERGY_CALC_MEASURES        = 2.0     # Measures over which user input on BPM adjustment is counted
 BPM_SHIFT_WAIT_MEASURES     = 1.0     # Wait for this amount of measures to change BPM
 BPM_SHIFT_CNTDWN_MEASURES   = 1.0     # Count down over this amount of measures
-ENERGY_AVG_LENGTH           = 400     # Amount of samples over which comparable energy is taken ( 100 samples =~ 5 seconds)
+
+ENERGY_SAMPLE_LENGTH        = 5       # Average acceleration is calculated over this amount of measurements
+ENERGY_AVG_LENGTH           = 120     # Amount of samples over which long term energy is taken ( 4 samples =~ 1 second)
 BPM_DIFF                    = 5.0     # Maximum BPM shift if user input was detected
 MAX_PED_RESP_TIME           = 5.0     # How long the beat mod is a response to user input
 

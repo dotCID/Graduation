@@ -16,7 +16,7 @@ EXIT_CODE_SELF = EXIT_CODE_CONTACT
 ## zmq
 import zmq
 from globalVars import CHANNEL_TARGETDATA
-from globalVars import CHANNEL_BEATDATA
+from globalVars import CHANNEL_ACCELDATA
 from globalVars import CHANNEL_BPM
 from globalVars import CHANNEL_BEAT
 
@@ -47,13 +47,13 @@ class SpecificAction(Action):
     targetPoller = zmq.Poller()
     targetPoller.register(targetChannel, zmq.POLLIN)
 
-    # Beat Data channel:
-    beatDataChannel = context.socket(zmq.SUB)
-    beatDataChannel.setsockopt(zmq.CONFLATE, 1 )
-    beatDataChannel.setsockopt(zmq.SUBSCRIBE, '')
-    beatDataChannel.connect(CHANNEL_BEATDATA)
-    beatDataPoller = zmq.Poller()
-    beatDataPoller.register(beatDataChannel, zmq.POLLIN)
+    # Accel Data channel:
+    accelDataChannel = context.socket(zmq.SUB)
+    accelDataChannel.setsockopt(zmq.CONFLATE, 1 )
+    accelDataChannel.setsockopt(zmq.SUBSCRIBE, '')
+    accelDataChannel.connect(CHANNEL_ACCELDATA)
+    accelDataPoller = zmq.Poller()
+    accelDataPoller.register(accelDataChannel, zmq.POLLIN)
 
     # BPM channel:
     bpmChannel = context.socket(zmq.SUB)
@@ -86,14 +86,12 @@ class SpecificAction(Action):
     startBeat = None
     energy_calc_start = None
     energyVals = []
-    beatData = {
-                't'     : 0,
-                'f0'    : 0.0,
-                's0'    : 0.0,
-                'avg_s0': 0.0,
-                'bpm'   : 0.0,
-                'beat'  : False
-               }
+    accelData = {
+                   't'           : 0,
+                   'a_avg_short' : 0.0,
+                   'a_avg_long'  : 0.0
+                }
+          
     currBPM = 120.0
     BPMAdjustment = 0
     adjustmentConfirmed = False
@@ -113,17 +111,10 @@ class SpecificAction(Action):
     
     def getEnergyAvg(self):
         """ Simple function for shorter syntax """
-        return self.beatDataChannel.recv_json()['s0_avg']
+        return self.accelDataChannel.recv_json()['a_avg_long']
         
-    def getBeatData(self):
-        """ Simple function for shorter syntax """
-        '''if len(self.beatDataPoller.poll(0)) is not 0:
-            return self.beatDataChannel.recv_json()
-        else:
-            return self.beatData
-        '''
-        #above would output so many 0's that it skewed results, better to use blocking than a poller
-        return self.beatDataChannel.recv_json()
+    def getAccelData(self):
+        return self.accelDataChannel.recv_json()
         
     def getBeat(self):
         return self.beatChannel.recv_json()
@@ -198,7 +189,7 @@ class SpecificAction(Action):
                     
                     # Append energy when the required amount of beats has not been reached yet
                     if (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES:
-                        self.energyVals.append(self.getBeatData()['s0'])
+                        self.energyVals.append(self.getAccelData()['a_avg_short'])
                         print "calculating energy (",self.millis() - self.energy_calc_start, ")", beat
                     
                     # Then confirm
