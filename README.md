@@ -1,14 +1,9 @@
 # Graduation
 Code written in the context of my graduation project on Human-Robot Interaction. The iterations of robots and software are named alphabetically, with the most recent code being the name last in the alphabet.
 
-## Requirements
-- Python 2.7.x
-- ZMQ
-- pyserial
-- pyOSC
-
-## Installation of requirements
+## Installation and requirements
 ### Required Python libraries
+This project is written using python 2.7.x.
 If you have pip installed, simply use
 
 ```
