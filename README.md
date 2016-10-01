@@ -19,8 +19,10 @@ sudo pip install https://pypi.python.org/packages/7c/e4/6abb118cf110813a7922119e
 pip sometimes has an issue finding pyOSC, hence the long url.
 
 ### Required Arduino libraries
-For the IMU:            ```https://github.com/adafruit/Adafruit_BNO055``` ```https://github.com/adafruit/Adafruit_Sensor```
+For the IMU:            ```https://github.com/adafruit/Adafruit_BNO055``` and ```https://github.com/adafruit/Adafruit_Sensor```
+
 For the Servo Shield:   ```https://github.com/adafruit/Adafruit-PWM-Servo-Driver-Library```
+
 For the NeoPixels:      ```https://github.com/adafruit/Adafruit_NeoPixel```
 
 ## Music software
