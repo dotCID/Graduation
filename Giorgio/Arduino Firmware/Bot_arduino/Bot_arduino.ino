@@ -49,7 +49,7 @@ Adafruit_PWMServoDriver s_drv = Adafruit_PWMServoDriver();
 Adafruit_NeoPixel pixelstrip = Adafruit_NeoPixel(NUMPIXELS, NPX_PIN, NEO_GRB + NEO_KHZ800);
 
 double BH_pos,BV_pos, TV_pos;
-bool fullPrint = true;
+bool fullPrint = false;
 bool fullStop = false; // if true, all servos initiate to 90 degrees by default instead of the above defaults
 
 uint32_t red    = pixelstrip.Color(255,   0,   0);
