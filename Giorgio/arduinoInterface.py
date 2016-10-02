@@ -80,12 +80,12 @@ def bpmCountUp(delay):
     Activates the "bpm will go up in .. " animation
     @param int delay: determines the time between LEDs lighting
     """
-    arduino.write("bpmAnimUp "+delay+"\n")
+    arduino.write("bpmAnimUp "+str(delay)+"\n")
 
 def bpmCountDown(delay):
     """ 
     Activates the "bpm will go down in .. " animation
     @param int delay: determines the time between LEDs lighting
     """
-    arduino.write("bpmAnimDown "+delay+"\n")
+    arduino.write("bpmAnimDown "+str(delay)+"\n")
 

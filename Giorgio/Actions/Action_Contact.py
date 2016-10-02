@@ -3,6 +3,7 @@
 Specific Action Class for maintaining eye contact with user and adjusting beat when the data indicates it should be
 """
 from Action import Action
+import arduinoInterface as aI 
 
 ## Exit codes
 from globalVars import EXIT_CODE_DONE
@@ -137,16 +138,13 @@ class SpecificAction(Action):
         print "Average long energy: ",self.averageEnergy, " Short term:",self.localAvgEnergy
         print "ediff was", ediff
         
-        bpmDifference = abs(round(ediff/10,0)*10)
-        
-        if bpmDifference > BPM_DIFF:
-            bpmDifference = BPM_DIFF
-        
         if abs(ediff) > THRESHOLD_EDIFF:
             if ediff < 0:
-                return bpmDifference
+                print "negative eDiff"
+                return BPM_DIFF
             else:
-                return bpmDifference * -1
+                print "positive eDiff"
+                return BPM_DIFF * -1
 
         print "Difference was too small."
         return 0
@@ -162,6 +160,8 @@ class SpecificAction(Action):
         #self.max_loops = loops
         #if self.loopCheck() == EXIT_CODE_DONE:
         #    return EXIT_CODE_DONE
+        
+        #TODO: Maybe moving first is a problem, as this creates a (possibly unpredictable) delay between pressing and response
         
         if not self.done(self.currentPosition(), contact_joint_positions):
             if printing: print "Action_Contact: Moving to look at pedal user"
@@ -197,17 +197,18 @@ class SpecificAction(Action):
                         if not self.adjustmentConfirmed:
                             self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
                             self.BPMAdjustment = self.calcAdjustBPM()
+                            
                             # BPM up/down animation  
-                            if self.BPMAdjustment > 0:
-                                print "BPM will go up"
+                            if self.BPMAdjustment > 0.0:
+                                print "BPM will go up", self.BPMAdjustment
                                 self.pedalResponse("up") # Communicate to Action that a response should be given
                                 aI.bpmUp()
-                            elif self.BPMAdjustment < 0:
-                                print "BPM will go down"
+                            elif self.BPMAdjustment < 0.0:
+                                print "BPM will go down", self.BPMAdjustment
                                 self.pedalResponse("down") # Communicate to Action that a response should be given
                                 aI.bpmDown()
                             else:
-                                print "BPM stays unchanged"
+                                print "BPM stays unchanged", self.BPMAdjustment
                                 aI.bpmSame()
                             self.adjustmentConfirmed = True
                             
@@ -237,6 +238,7 @@ class SpecificAction(Action):
                         self.energyVals = []
                         self.energy_calc_start = None
                         self.averageEnergy = None
+                        self.startBeat = None
                         
                         return EXIT_CODE_ACK
             
