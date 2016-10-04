@@ -1,5 +1,5 @@
 # Graduation
-Code written in the context of my graduation project on Human-Robot Interaction. The iterations of robots and software are named alphabetically, with the most recent code being the name last in the alphabet.
+Code written in the context of my graduation project on Human-Robot Interaction.
 
 ## Installation and requirements
 ### Required Python libraries
