@@ -21,7 +21,7 @@
 #define BH_ID  0
 #define BV1_ID 1
 #define BV2_ID 2
-#define TV_ID  3
+#define TV_ID  4
 
 // Pulse lengths for "towar dpro MG996R"
 #define TWP_MIN  125 // this is the 'minimum' pulse length count (out of 4096)
