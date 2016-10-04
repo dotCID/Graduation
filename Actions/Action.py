@@ -62,7 +62,7 @@ class Action:
         
         # Speed settings
         self.minV     = 0.01
-        self.maxV     = 2.00
+        self.maxV     = 0.5
         self.a        = 0.0075
         self.vMax     = [self.maxV, self.maxV, self.maxV]
         self.vCurr    = [self.minV, self.minV, self.minV]
@@ -74,13 +74,13 @@ class Action:
                         'mod'   : 0.6,  # degrees of modification +/-
                         'dir'   : 0    # direction of modification. can be -1 | 0 | 1
                        }
-        self.BPM = 120.0
+        self.BPM = 100.0
         self.beatInterval = 60000.0 / self.BPM
         self.energyLevel = "high"
         self.lastIntervalSwitch = 0
         
         # In response to adjusting beat:
-        self.pedalResponseTime = 0.0
+        self.pedalResponseTime = 0
         self.pedalResponseDone = True
         
         # Position
@@ -303,12 +303,12 @@ class Action:
         #TODO: test optimum values for this
         if self.mode is "A":
             self.minV = 0.01
-            self.maxV = 4.00
+            self.maxV = 2.00
             self.a = 0.015
             self.vMax = [self.maxV, self.maxV, self.maxV]
         elif self.mode is "B":
             self.minV = 0.05
-            self.maxV = 8.00
+            self.maxV = 4.00
             self.a = 0.025
             self.vMax = [self.maxV, self.maxV, self.maxV]
             

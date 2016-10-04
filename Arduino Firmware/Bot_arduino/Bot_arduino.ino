@@ -12,6 +12,7 @@
 #define PXGROUP 5
 
 // NeoPixel patterns
+#define PXPAT_ON    11
 #define PXPAT_PULSE  0
 #define PXPAT_BPMUP  1
 #define PXPAT_BPMDW -1
@@ -41,7 +42,7 @@
 
 #define TV_MIN 0
 #define TV_MAX 180
-#define TV_DEF 75
+#define TV_DEF 120
 
 // called this way, it uses the default address 0x40
 Adafruit_PWMServoDriver s_drv = Adafruit_PWMServoDriver();
@@ -61,7 +62,7 @@ uint32_t none   = pixelstrip.Color(  0,   0,   0);
 
 uint32_t colours[] = { red,  white, red, green, blue};
 
-int npx_currentPattern = PXPAT_PULSE;
+int npx_currentPattern = PXPAT_ON;
 unsigned long npx_timer = millis();
 uint16_t npx_pulseDelay = 300;
 
@@ -134,6 +135,7 @@ void readSerial(){
     
     }else if(inputString.startsWith("start")){
           Serial.println(F("Starting."));
+          npx_currentPattern = PXPAT_PULSE;
           fullStop = false;
     
     }else if(inputString.startsWith("BH")){
@@ -145,7 +147,7 @@ void readSerial(){
       if(fullPrint) Serial.print(F("BH_pos is now "));Serial.println(BH_pos);
       
      if(fullPrint) Serial.print("Set BH to ");
-     if(fullPrint) Serial.print((int)degree2Pulse(BH_pos, "TWP"));
+     if(fullPrint) Serial.println((int)degree2Pulse(BH_pos));
      
     }else if(inputString.startsWith("BV")){
       String val = inputString.substring(3,inputString.length());
@@ -157,7 +159,7 @@ void readSerial(){
       
       
       if(fullPrint) {   Serial.print("Set BV to ");
-                        Serial.print(map(BV_POS, 0, 180, 212, 580));Serial.print("\t");Serial.println(map(BV_POS, 0, 180, 580, 195)-map(abs(BV_POS-90), 0, 90, 18, 0));
+                        Serial.print(map(BV_pos, 0, 180, 212, 580));Serial.print("\t");Serial.println(map(BV_pos, 0, 180, 580, 195)-map(abs(BV_pos-90), 0, 90, 18, 0));
                     }
       
     }else if(inputString.startsWith("TV")){
@@ -194,6 +196,7 @@ void readSerial(){
     
     }
     inputString = "";
+    stringComplete = false;
   }
 }
 
@@ -208,8 +211,8 @@ void runMotors(){
         
         if((BV_pos >= BV_MIN) && (BV_pos <= BV_MAX)){
             // These motors are quite finicky in use, require different min/max pulses and some compensation for the error in servo 2
-            pulseWidth_1 = map(BV_POS, 0, 180, 212, 580); 
-            pulseWidth_2 = map(BV_POS, 0, 180, 580, 195)-map(abs(BV_POS-90), 0, 90, 18, 0); // This compensation for the nonlinear behaviour of #2 (left) seems to be working the best - though not perfectly
+            int pulseWidth_1 = map(BV_pos, 0, 180, 212, 580); 
+            int pulseWidth_2 = map(BV_pos, 0, 180, 580, 195)-map(abs(BV_pos-90), 0, 90, 18, 0); // This compensation for the nonlinear behaviour of #2 (left) seems to be working the best - though not perfectly
           
             s_drv.setPWM(BV1_ID, 0, pulseWidth_1);
             s_drv.setPWM(BV2_ID, 0, pulseWidth_2);
@@ -235,9 +238,34 @@ uint16_t degree2Pulse(double degree){
 */
 bool npx_lit = false;
 int npx_i = 0;
+int npx_on_i = 0;
 void ledPattern(int pattern){
     if(!fullStop){
-        if(pattern == PXPAT_PULSE){
+        if(pattern == PXPAT_ON){
+            npx_pulseDelay = 1000;
+            int timePassed = millis() - npx_timer;
+            if(timePassed > npx_pulseDelay){
+                npx_timer = millis();            
+                npx_lit = !npx_lit;
+            }
+        
+        
+            // Varying intensity:
+            uint32_t colour = pixelstrip.Color(100, 100, 100);
+            if(npx_lit){
+                npx_on_i++;
+            }else{
+                npx_on_i--;
+            }
+            
+            colour = pixelstrip.Color(50+npx_on_i/10, 50+npx_on_i/10, 50+npx_on_i/10);
+            for(int i=0;i<NUMPIXELS;i++){
+                    pixelstrip.setPixelColor(i, colour);
+            }
+            
+            pixelstrip.show();
+        
+        }else if(pattern == PXPAT_PULSE){
             npx_pulseDelay = 300;
             if(millis() - npx_timer > npx_pulseDelay){
                 if(npx_lit){

@@ -51,9 +51,12 @@ def moveTo(joint_angles):
     global currAngles
     totalResponse = "<"
     for i in range(len(joint_angles)):
-        totalResponse += arduinoWrite(joint_angles[i], i).strip()
+        # The servos are powered by a PWM signal that gives about a 0.5 degree resolution.
+        # To smooth out movement, we round that out here.
+        angle = round(joint_angles[i]*4.0)/4.0
+        totalResponse += arduinoWrite(angle, i).strip()
         totalResponse += ", "
-        currAngles[i] = joint_angles[i]
+        currAngles[i] = angle
     
     totalResponse += ">"
     return totalResponse
@@ -88,4 +91,10 @@ def bpmCountDown(delay):
     @param int delay: determines the time between LEDs lighting
     """
     arduino.write("bpmAnimDown "+str(delay)+"\n")
+
+def ready():
+    """
+    Signals the bot that the PC is ready
+    """
+    arduino.write("start\n")
 

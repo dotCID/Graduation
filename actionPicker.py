@@ -34,6 +34,8 @@ from globalVars import EXIT_CODE_ACK
 from globalVars import EXIT_CODE_STEVIE
 from globalVars import EXIT_CODE_BORED
 
+import arduinoInterface as aI
+
 ## Change terminal window header for easier identification of contents
 sys.stdout.write("\x1b]2;actionPicker.py\x07")
 
@@ -188,12 +190,13 @@ def getPedalState():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
-#exit_code = -2 # start without movement
-exit_code = 0
+exit_code = -2 # start without movement
 waiting = False
 dead = False
 
 oldPedalState = getPedalState()
+
+aI.ready()
 
 while True:
     if exit_code == -1:

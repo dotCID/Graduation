@@ -9,9 +9,16 @@ If you have pip installed, simply use
 ```
 sudo pip install zmq
 sudo pip install pyserial
+sudo pip install SimpleCV
+sudo pip install pygame
 sudo pip install https://pypi.python.org/packages/7c/e4/6abb118cf110813a7922119ed0d53e5fe51c570296785ec2a39f37606d85/pyOSC-0.3.5b-5294.tar.gz#md5=ea027aae543aad2ecf7ae51c2a6b6626
 ```
 pip sometimes has an issue finding pyOSC, hence the long url.
+
+### OpenCV
+To install OpenCV I recommend using ```git clone https://github.com/jayrambhia/Install-OpenCV``` and following the instructions there.
+
+*My SimpleCV install is currently not working, will update when I figured it out*
 
 ### Required Arduino libraries
 For the IMU:            ```https://github.com/adafruit/Adafruit_BNO055``` and ```https://github.com/adafruit/Adafruit_Sensor```

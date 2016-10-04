@@ -1,22 +1,23 @@
 """
-This file is a database of all poses Fritz uses. Consolidated into one file for easier changing and debugging.
+This file is a database of all poses Giorgio uses. Consolidated into one file for easier changing and debugging.
+It would be best for the future to convert all poses to offsets of the default, since (re)construction of the robot changes the angles needed.
 """
 
 
 ## Defaults
-pos_default    = (105.0, 130.0,  75.0)
-pos_min        = ( 10.0,  10.0,  20.0)
-pos_max        = (170.0, 160.0, 160.0)
+pos_default    = ( 67.0,  50.0, 120.0)
+pos_min        = (  0.0,   5.0,  20.0)
+pos_max        = (180.0, 160.0, 160.0)
 
 ## For playing dead
-pos_dead       = (170, 30, 75 )
+pos_dead       = (170, 5, 20 )
 
 ## Action 1: Contact
-contact_joint_positions = [ 94.0 , 100.0, 135.0 ]
+contact_joint_positions = [ 94.0 , 50.0, 135.0 ]
 
 ## Action 2: Scan
-scan_pos_L = [ 10.0, 110.0, 135.0]
-scan_pos_R = [105.0,  90.0, 145.0]
+scan_pos_L = [  0.0,  65.0, 105.0]
+scan_pos_R = [180.0,  50.0, 125.0]
 
 ## Action 3: Acknowledge
 ack_pos_C = [ 94.0,  110.0, 130.0]
