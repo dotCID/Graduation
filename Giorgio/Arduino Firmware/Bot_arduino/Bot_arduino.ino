@@ -27,8 +27,8 @@
 #define TWP_MIN  125 // this is the 'minimum' pulse length count (out of 4096)
 #define TWP_MAX  525 // this is the 'maximum' pulse length count (out of 4096)
 
-#define FTK_MIN  125
-#define FTK_MAX  650
+#define FTK_MIN  175
+#define FTK_MAX  580
 
 // Min, max and default values for the servos
 #define BH_MIN 0
@@ -108,9 +108,6 @@ void loop(){
   Possible commands:
   start         -   Starts the motor actuation
   stop          -   Stops motor actuation
-  home          -   Return to default angles
-  on            -   Turn LED 13 on
-  off           -   Turn LED 13 off
   BH #.#
   BV #.#
   TH #.#
@@ -120,7 +117,6 @@ void loop(){
   bpmDown       -   Quick pattern down
   bpmCountUp    -   Count up from the bottom LED
   bpmCountDown  -   Count down from the top LED
-  undo          -   Clear input string
 */
 void readSerial(){
   while (Serial.available()) {
@@ -135,20 +131,11 @@ void readSerial(){
       if(inputString.startsWith("stop")){
           Serial.println(F("Stopping."));
           fullStop = true;
+    
     }else if(inputString.startsWith("start")){
           Serial.println(F("Starting."));
           fullStop = false;
-    }else if(inputString.startsWith("home")){
-        Serial.println(F("Returning to default angles."));
-        BH_pos = BH_DEF;
-        BV_pos = BV_DEF;
-        TV_pos = TV_DEF;
-    }else if(inputString.indexOf("on")!=-1){
-      Serial.println(F("LED on"));
-        digitalWrite(13,HIGH);
-    }else if(inputString.indexOf("off")!=-1){
-      Serial.println(F("LED off"));
-        digitalWrite(13,LOW);
+    
     }else if(inputString.startsWith("BH")){
       String val = inputString.substring(3,inputString.length());
       BH_pos = val.toFloat();
@@ -159,6 +146,7 @@ void readSerial(){
       
      if(fullPrint) Serial.print("Set BH to ");
      if(fullPrint) Serial.print((int)degree2Pulse(BH_pos, "TWP"));
+     
     }else if(inputString.startsWith("BV")){
       String val = inputString.substring(3,inputString.length());
       BV_pos = val.toFloat();
@@ -169,8 +157,7 @@ void readSerial(){
       
       
       if(fullPrint) {   Serial.print("Set BV to ");
-                        Serial.print((int)degree2Pulse(BV_pos, "FTK")); Serial.print(", ");
-                        Serial.println((int)degree2Pulse(180.0-BV_pos, "FTK"));
+                        Serial.print(map(BV_POS, 0, 180, 212, 580));Serial.print("\t");Serial.println(map(BV_POS, 0, 180, 580, 195)-map(abs(BV_POS-90), 0, 90, 18, 0));
                     }
       
     }else if(inputString.startsWith("TV")){
@@ -180,23 +167,25 @@ void readSerial(){
       if(TV_pos>TV_MAX) TV_pos = TV_MAX;
       
       if(fullPrint) Serial.print(F("TV_pos is now "));Serial.println(TV_pos);
-    }else if(inputString.indexOf("undo")!=-1){
-        inputString = "";
-        Serial.println(F("Cleared input string."));
+    
     }else if(inputString.startsWith("bpmSame")){
         npx_currentPattern = PXPAT_PULSE;
         npx_pulseDelay = 50;
+    
     }else if(inputString.startsWith("bpmUp")){
         npx_currentPattern = PXPAT_BPMUP;
         npx_pulseDelay = 100;
+    
     }else if(inputString.startsWith("bpmDown")){
         npx_currentPattern = PXPAT_BPMDW;
         npx_pulseDelay = 100;
+    
     }else if(inputString.startsWith("bpmCountUp")){
         String val = inputString.substring(10,inputString.length());
         int pxdelay = val.toInt();
         npx_currentPattern = PXPAT_BPMUP;
         npx_pulseDelay = pxdelay;
+    
     }else if(inputString.startsWith("bpmCountDown")){
         String val = inputString.substring(12,inputString.length());
         int pxdelay = val.toInt();
@@ -214,17 +203,20 @@ void readSerial(){
 void runMotors(){
     if(!fullStop){
         if((BH_pos >= BH_MIN) && (BH_pos <= BH_MAX)){
-            s_drv.setPWM(BH_ID, 0, degree2Pulse(BH_pos, "TWP"));
+            s_drv.setPWM(BH_ID, 0, degree2Pulse(BH_pos));
         }
         
         if((BV_pos >= BV_MIN) && (BV_pos <= BV_MAX)){
-            s_drv.setPWM(BV1_ID, 0, degree2Pulse(BV_pos, "FTK"));
-            s_drv.setPWM(BV2_ID, 0, degree2Pulse(180.0 - BV_pos, "FTK")); // control second motor inversely
-            
+            // These motors are quite finicky in use, require different min/max pulses and some compensation for the error in servo 2
+            pulseWidth_1 = map(BV_POS, 0, 180, 212, 580); 
+            pulseWidth_2 = map(BV_POS, 0, 180, 580, 195)-map(abs(BV_POS-90), 0, 90, 18, 0); // This compensation for the nonlinear behaviour of #2 (left) seems to be working the best - though not perfectly
+          
+            s_drv.setPWM(BV1_ID, 0, pulseWidth_1);
+            s_drv.setPWM(BV2_ID, 0, pulseWidth_2);
         }
         
         if((TV_pos >= TV_MIN) && (TV_pos <= TV_MAX)){
-            s_drv.setPWM(TV_ID, 0, degree2Pulse(TV_pos, "TWP"));
+            s_drv.setPWM(TV_ID, 0, degree2Pulse(TV_pos));
         }
     }else{
         //Serial.print(F("All motion is currently stopped. Please send \"start\" to start moving."));
@@ -232,11 +224,10 @@ void runMotors(){
 }
 
 /* 
-    Converts positions in degrees to pulsewidth signals for the driver 
+    Converts positions in degrees to pulsewidth signals for the driver. Used for the BH and TV motors.
 */
-uint16_t degree2Pulse(double degree, char* type){
-    if(type == "TWP")  return (uint16_t) map(degree, 0.0, 180.0, TWP_MIN, TWP_MAX);
-    if(type == "FTK")  return (uint16_t) map(degree, 0.0, 180.0, FTK_MIN, FTK_MAX);
+uint16_t degree2Pulse(double degree){
+    return (uint16_t) map(degree, 0.0, 180.0, TWP_MIN, TWP_MAX);
 }
 
 /*
