@@ -62,6 +62,7 @@ uint32_t none   = pixelstrip.Color(  0,   0,   0);
 
 uint32_t colours[] = { red,  white, red, green, blue};
 
+float bpm = 100;
 int npx_currentPattern = PXPAT_ON;
 unsigned long npx_timer = millis();
 uint16_t npx_pulseDelay = 300;
@@ -205,6 +206,11 @@ void readSerial(){
     
     }else if(inputString.startsWith("pixOn")){
         npx_currentPattern = PXPAT_ON;
+        
+    }else if(inputString.startsWith("BPM")){
+        String val = inputString.substring(4, inputString.length());
+        bpm = val.toFloat();
+        
     }
     inputString = "";
     stringComplete = false;
@@ -274,7 +280,7 @@ void ledPattern(int pattern){
             pixelstrip.show();
         
         }else if(pattern == PXPAT_PULSE){
-            npx_pulseDelay = 300;
+            npx_pulseDelay = 60000.0 / bpm;
             if(millis() - npx_timer > npx_pulseDelay){
                 if(npx_lit){
                     // turn all off

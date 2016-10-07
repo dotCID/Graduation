@@ -10,7 +10,7 @@ pos_min        = (  0.0,   5.0,  20.0)
 pos_max        = (180.0, 160.0, 160.0)
 
 ## For playing dead
-pos_dead       = (170.0,   5.0,  20.0)
+pos_dead       = (170.0,   5.0, 160.0)
 
 ## Action 1: Contact
 contact_joint_positions = [ 94.0 , 50.0, 135.0 ]
@@ -20,9 +20,9 @@ scan_pos_L = [  0.0,  65.0, 105.0]
 scan_pos_R = [180.0,  50.0, 125.0]
 
 ## Action 3: Acknowledge
-ack_pos_C = [ 94.0,  110.0, 130.0]
-ack_pos_L = [ 85.0,  90.0, 140.0]
-ack_pos_R = [ 105.0,  120.0, 120.0]
+ack_pos_C = [ contact_joint_positions[0],  contact_joint_positions[1], contact_joint_positions[2]]
+ack_pos_L = [ contact_joint_positions[0]-15.0,  contact_joint_positions[1]+20.0, contact_joint_positions[2]-10.0]
+ack_pos_R = [ contact_joint_positions[0]+10.0,  contact_joint_positions[1]-10.0, contact_joint_positions[2]+10.0]
 
 ## Action 4: Stevie
 drifting_pos_C = [ 110.0, 130.0, 120.0]

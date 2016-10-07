@@ -119,7 +119,7 @@ targetData   = {
 energyData   = {
                 't'        : millis(),
                 'energy'   : 0.0,
-                'eg_label' : "low"
+                'eg_label' : "high"
                }
 
 
@@ -170,8 +170,8 @@ def randomSelectC():
     Selects an action from set C (high energy).
     @return: the return code {2 or 3} of the next action
     """
-    chances = (0.0, 0.3, 0.7, 0.0, 0.0)
-    modes   = ("0", "A", "A", "0", "0")
+    chances = (0.0, 0.3, 0.2, 0.5, 0.0)
+    modes   = ("0", "A", "A", "A", "0")
     
     return randomSelect(chances, modes)
 
@@ -297,7 +297,7 @@ while True:
         # if an Action returns anything other than EXIT_CODE_DONE we follow their advice:
         #if printing: print "Continuing ", exit_code
         if exit_code == EXIT_CODE_ACK:
-            exit_code = actions[exit_code].execute(450)
+            exit_code = actions[exit_code].execute(900)
         else:
             exit_code = actions[exit_code].execute(250)
 

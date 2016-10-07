@@ -103,4 +103,11 @@ def pixOn():
     Returns the pattern to the "waiting" pattern, used when playing dead
     """
     arduino.write("pixOn\n")
+    
+def setBPM(bpm):
+    """
+    Gives the Arduino a new BPM to blink to
+    """
+    if bpm is float:
+        arduino.write("BPM "+str(bpm)+"\n")
 

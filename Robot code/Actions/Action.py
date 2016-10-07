@@ -361,7 +361,7 @@ class Action:
         self.adaptToMode()
         
         pos = aI.getAngles() ## This is the new method of getting current joint data
-        print pos
+        #print pos
         
         self.calcBeatMod()
         """
