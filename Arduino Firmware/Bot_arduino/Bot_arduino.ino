@@ -56,8 +56,8 @@ bool fullStop = false; // if true, all servos initiate to 90 degrees by default 
 uint32_t red    = pixelstrip.Color(255,   0,   0);
 uint32_t green  = pixelstrip.Color(  0, 255,   0);
 uint32_t blue   = pixelstrip.Color(  0,   0, 255);
-uint32_t white  = pixelstrip.Color(255, 255, 255);
-uint32_t purple = pixelstrip.Color(138,   0, 226);
+uint32_t white  = pixelstrip.Color(125, 125, 125);
+uint32_t purple = pixelstrip.Color( 69,   0, 113);
 uint32_t none   = pixelstrip.Color(  0,   0,   0);
 
 uint32_t colours[] = { red,  white, red, green, blue};
@@ -65,6 +65,9 @@ uint32_t colours[] = { red,  white, red, green, blue};
 int npx_currentPattern = PXPAT_ON;
 unsigned long npx_timer = millis();
 uint16_t npx_pulseDelay = 300;
+bool npx_lit = false;
+int npx_i = 0;
+int npx_on_i = 0;
 
 String inputString ="";
 bool stringComplete = false;
@@ -94,7 +97,7 @@ void setup(){
     
     delay(1000);
     
-    Serial.println(F("Setup done."));
+    Serial.println(F("Bot_arduino: Setup done."));
     
 }
 
@@ -171,29 +174,37 @@ void readSerial(){
       if(fullPrint) Serial.print(F("TV_pos is now "));Serial.println(TV_pos);
     
     }else if(inputString.startsWith("bpmSame")){
-        npx_currentPattern = PXPAT_PULSE;
+        npx_currentPattern = PXPAT_BPMSAME;
         npx_pulseDelay = 50;
+        npx_i = 0;
     
     }else if(inputString.startsWith("bpmUp")){
         npx_currentPattern = PXPAT_BPMUP;
         npx_pulseDelay = 100;
+        npx_i = 0;
     
     }else if(inputString.startsWith("bpmDown")){
         npx_currentPattern = PXPAT_BPMDW;
+        npx_i = PXGROUP;
         npx_pulseDelay = 100;
     
     }else if(inputString.startsWith("bpmCountUp")){
         String val = inputString.substring(10,inputString.length());
         int pxdelay = val.toInt();
+        Serial.print(inputString); Serial.println(pxdelay);
         npx_currentPattern = PXPAT_BPMUP;
         npx_pulseDelay = pxdelay;
+        npx_i = 1;
     
     }else if(inputString.startsWith("bpmCountDown")){
         String val = inputString.substring(12,inputString.length());
         int pxdelay = val.toInt();
         npx_currentPattern = PXPAT_BPMDW;
         npx_pulseDelay = pxdelay;
+        npx_i = PXGROUP-1;
     
+    }else if(inputString.startsWith("pixOn")){
+        npx_currentPattern = PXPAT_ON;
     }
     inputString = "";
     stringComplete = false;
@@ -236,9 +247,6 @@ uint16_t degree2Pulse(double degree){
 /*
     Selects from a choice of patterns and displays them
 */
-bool npx_lit = false;
-int npx_i = 0;
-int npx_on_i = 0;
 void ledPattern(int pattern){
     if(!fullStop){
         if(pattern == PXPAT_ON){
@@ -294,9 +302,9 @@ void ledPattern(int pattern){
                     // turn on every 5th one
                     for(int j=0;j<NUMPIXELS/PXGROUP;j++){
                       if(j!=1){
-                        pixelstrip.setPixelColor(PXGROUP*2-npx_i-1, blue);
-                      }else{
                         pixelstrip.setPixelColor(npx_i+PXGROUP*j, blue);
+                      }else{
+                        pixelstrip.setPixelColor(PXGROUP*2-npx_i-1, blue);
                       }
                     }
                     
@@ -309,7 +317,7 @@ void ledPattern(int pattern){
                 npx_currentPattern = PXPAT_PULSE;
             }
         }else if(pattern == PXPAT_BPMDW){
-            if(npx_i<PXGROUP){
+            if(npx_i>0){
                 if(millis() - npx_timer > npx_pulseDelay){
                     // turn all off
                     for(int j=0;j<NUMPIXELS;j++){
@@ -319,15 +327,39 @@ void ledPattern(int pattern){
                     // turn on every 5th one
                     for(int j=0;j<NUMPIXELS/PXGROUP;j++){
                       if(j!=1){
-                        pixelstrip.setPixelColor(npx_i+PXGROUP*j, green);
+                        pixelstrip.setPixelColor(npx_i-1+PXGROUP*j, green);
                       }else{
-                        pixelstrip.setPixelColor(PXGROUP*2-npx_i-1, green);
+                        pixelstrip.setPixelColor(PXGROUP*2-npx_i, green);
                       }
                     }
                     
                     pixelstrip.show();
-                    npx_i++;
+                    npx_i--;
                     npx_timer = millis();
+                }
+            }else{
+                npx_i = 0;
+                npx_currentPattern = PXPAT_PULSE;
+            }
+        }else if(pattern == PXPAT_BPMSAME){
+            npx_pulseDelay = 50;
+            if(npx_i<8){
+                if(millis() - npx_timer > npx_pulseDelay){
+                    if(npx_lit){
+                        // turn all off
+                        for(int i=0;i<NUMPIXELS;i++){
+                            pixelstrip.setPixelColor(i, none);
+                        }
+                    }else{
+                        for(int i=0;i<NUMPIXELS;i++){
+                            pixelstrip.setPixelColor(i, white);
+                        }
+                    }
+                    
+                    pixelstrip.show();
+                    npx_lit = !npx_lit;
+                    npx_timer = millis();                    
+                    npx_i++;
                 }
             }else{
                 npx_i = 0;

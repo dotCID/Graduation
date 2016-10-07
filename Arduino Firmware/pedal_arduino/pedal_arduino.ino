@@ -12,7 +12,7 @@ void setup() {
   pinMode(10, INPUT_PULLUP);
   Serial.begin(115200);
   delay(500);
-  Serial.println("Setup complete.");
+  Serial.println("Pedal_arduino: Setup complete.");
   delay(500);
 }
 
