@@ -1,0 +1,12 @@
+#!/bin/bash
+# this opens all sensors if executed from an Ubuntu gnome-terminal instance
+
+#gnome-terminal -x python simpleCV_3_noOutput.py    # Currently not working
+
+gnome-terminal -x python energyDetect.py
+
+gnome-terminal -x python IMUInterface.py
+
+gnome-terminal -x python pyOSCServer.py
+
+gnome-terminal -x python footPedal.py
