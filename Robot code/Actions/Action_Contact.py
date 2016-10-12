@@ -163,89 +163,87 @@ class SpecificAction(Action):
         #if self.loopCheck() == EXIT_CODE_DONE:
         #    return EXIT_CODE_DONE
         
-        #TODO: Maybe moving first is a problem, as this creates a (possibly unpredictable) delay between pressing and response
-        
         if not self.done(self.currentPosition(), contact_joint_positions):
             if printing: print "Action_Contact: Moving to look at pedal user"
             self.move(contact_joint_positions)
             return EXIT_CODE_SELF
+        
+        if self.averageEnergy is None:
+            self.averageEnergy = self.getEnergyAvg()
         else:
-            if self.averageEnergy is None:
-                self.averageEnergy = self.getEnergyAvg()
-            else:
-                # calculate BPM over given interval
+            # calculate BPM over given interval
+            
+            # but only from the start of a measure, assuming 4/4 timing
+            if self.startBeat is None:
+                self.startBeat = self.getBeat()["num"]
+            
+            if self.startBeat%4!=0 and self.energy_calc_start is None:
+                print "Waiting for measure to start",self.startBeat
+                self.startBeat = None
+                return EXIT_CODE_SELF
+            else:                    
+                if self.energy_calc_start is None:
+                    self.energy_calc_start = self.millis()
                 
-                # but only from the start of a measure, assuming 4/4 timing
-                if self.startBeat is None:
-                    self.startBeat = self.getBeat()["num"]
+                beat = self.getBeat()["num"]
                 
-                if self.startBeat%4!=0 and self.energy_calc_start is None:
-                    print "Waiting for measure to start",self.startBeat
-                    self.startBeat = None
-                    return EXIT_CODE_SELF
-                else:                    
-                    if self.energy_calc_start is None:
-                        self.energy_calc_start = self.millis()
-                    
-                    beat = self.getBeat()["num"]
-                    
-                    # Append energy when the required amount of beats has not been reached yet
-                    if (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES:
-                        # Turn on the LEDs constantly to indicate listening
-                        aI.pixOn()
-                        self.energyVals.append(self.getAccelData()['a_avg_short'])
-                        print "calculating energy (",self.millis() - self.energy_calc_start, ")", beat
-                    
-                    # Then confirm
-                    elif (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES + BPM_SHIFT_WAIT_MEASURES:
-                        if not self.adjustmentConfirmed:
-                            self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
-                            self.BPMAdjustment = self.calcAdjustBPM()
-                            
-                            # BPM up/down animation  
-                            if self.BPMAdjustment > 0.0:
-                                print "BPM will go up", self.BPMAdjustment
-                                self.pedalResponse("up") # Communicate to Action that a response should be given
-                                aI.bpmUp()
-                            elif self.BPMAdjustment < 0.0:
-                                print "BPM will go down", self.BPMAdjustment
-                                self.pedalResponse("down") # Communicate to Action that a response should be given
-                                aI.bpmDown()
-                            else:
-                                print "BPM stays unchanged", self.BPMAdjustment
-                                aI.bpmSame()
-                            self.adjustmentConfirmed = True
-                            
-                    # Count down
-                    else:
-                        self.currBPM = self.getBPM(self.currBPM)
+                # Append energy when the required amount of beats has not been reached yet
+                if (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES:
+                    # Turn on the LEDs constantly to indicate listening
+                    aI.pixOn()
+                    self.energyVals.append(self.getAccelData()['a_avg_short'])
+                    print "calculating energy (",self.millis() - self.energy_calc_start, ")", beat
+                
+                # Then confirm
+                elif (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES + BPM_SHIFT_WAIT_MEASURES:
+                    if not self.adjustmentConfirmed:
+                        self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
+                        self.BPMAdjustment = self.calcAdjustBPM()
                         
-                        if not self.countDownAnimStarted:
-                            # BPM countdown animation           
-                            LEDDelay = 60000.0 / self.currBPM
-                            
+                        # BPM up/down animation  
+                        if self.BPMAdjustment > 0.0:
+                            print "BPM will go up", self.BPMAdjustment
+                            self.pedalResponse("up") # Communicate to Action that a response should be given
+                            aI.bpmUp()
+                        elif self.BPMAdjustment < 0.0:
+                            print "BPM will go down", self.BPMAdjustment
+                            self.pedalResponse("down") # Communicate to Action that a response should be given
+                            aI.bpmDown()
+                        else:
+                            print "BPM stays unchanged", self.BPMAdjustment
+                            aI.bpmSame()
+                        self.adjustmentConfirmed = True
+                        
+                # Count down
+                else:
+                    self.currBPM = self.getBPM(self.currBPM)
+                    
+                    if not self.countDownAnimStarted:
+                        # BPM countdown animation           
+                        LEDDelay = 60000.0 / self.currBPM
+                        
 
-                            if self.BPMAdjustment > 0:                        
-                                print "Starting countup animation", LEDDelay, beat
-                                aI.bpmCountUp(LEDDelay)
-                            elif self.BPMAdjustment < 0:
-                                print "Starting countdown animation", LEDDelay, beat
-                                aI.bpmCountDown(LEDDelay)
-                                
-                            self.countDownAnimStarted = True
-                    # Adjust BPM
-                    if (beat / 4.0) - (self.startBeat / 4.0) >= ENERGY_CALC_MEASURES + BPM_SHIFT_WAIT_MEASURES + BPM_SHIFT_CNTDWN_MEASURES:
-                        print "Applying adjustment.", beat
-                        self.setBPM(self.currBPM + self.BPMAdjustment)
-                        
-                        # clear old values
-                        self.adjustmentConfirmed = False
-                        self.countDownAnimStarted = False
-                        self.energyVals = []
-                        self.energy_calc_start = None
-                        self.averageEnergy = None
-                        self.startBeat = None
-                        
-                        return EXIT_CODE_ACK
+                        if self.BPMAdjustment > 0:                        
+                            print "Starting countup animation", LEDDelay, beat
+                            aI.bpmCountUp(LEDDelay)
+                        elif self.BPMAdjustment < 0:
+                            print "Starting countdown animation", LEDDelay, beat
+                            aI.bpmCountDown(LEDDelay)
+                            
+                        self.countDownAnimStarted = True
+                # Adjust BPM
+                if (beat / 4.0) - (self.startBeat / 4.0) >= ENERGY_CALC_MEASURES + BPM_SHIFT_WAIT_MEASURES + BPM_SHIFT_CNTDWN_MEASURES:
+                    print "Applying adjustment.", beat
+                    self.setBPM(self.currBPM + self.BPMAdjustment)
+                    
+                    # clear old values
+                    self.adjustmentConfirmed = False
+                    self.countDownAnimStarted = False
+                    self.energyVals = []
+                    self.energy_calc_start = None
+                    self.averageEnergy = None
+                    self.startBeat = None
+                    
+                    return EXIT_CODE_ACK
             
             return EXIT_CODE_SELF
