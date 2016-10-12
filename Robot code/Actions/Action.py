@@ -31,6 +31,7 @@ from globalVars import TEST_MODE_SLOW
 from globalVars import CHANNEL_MODE
 from globalVars import CHANNEL_BPM
 from globalVars import CHANNEL_ENERGYDATA
+from globalVars import CHANNEL_BEAT
 
 from globalVars import MAX_PED_RESP_TIME
 from globalVars import OSC_ABLETON_IP
@@ -62,7 +63,7 @@ class Action:
         
         # Speed settings
         self.minV     = 0.01
-        self.maxV     = 0.5
+        self.maxV     = 1.5
         self.a        = 0.0075
         self.vMax     = [self.maxV, self.maxV, self.maxV]
         self.vCurr    = [self.minV, self.minV, self.minV]
@@ -71,11 +72,12 @@ class Action:
         
         # Modifiers for beat response
         self.beatMod = {
-                        'mod'   : 0.3,  # degrees of modification +/-
+                        'mod'   : 0.5,  # degrees of modification +/-
                         'dir'   : 0    # direction of modification. can be -1 | 0 | 1
                        }
         self.BPM = 100.0
         self.beatInterval = 60000.0 / self.BPM
+        self.beat = 1
         self.energyLevel = "high"
         self.lastIntervalSwitch = 0
         
@@ -123,13 +125,22 @@ class Action:
         self.egPoller = zmq.Poller()
         self.egPoller.register(self.egChannel, zmq.POLLIN)
         
+        # Beat channel
+        self.beatChannel = zmq.Context().socket(zmq.SUB)
+        self.beatChannel.setsockopt(zmq.CONFLATE,1 )
+        self.beatChannel.setsockopt(zmq.SUBSCRIBE, '')
+        self.beatChannel.connect(CHANNEL_BEAT)
+        self.beatPoller = zmq.Poller()
+        self.beatPoller.register(self.beatChannel, zmq.POLLIN)
         
         # After all has been defined, get BPM once
         self.BPM = self.getBPM(self.BPM)
+        self.beat = self.getBeat()
         
     # Arduino-style millis() function for timekeeping
     def millis(self):
         return int(round(time.time() * 1000))
+        
     
     def currentPosition(self):
         return aI.getAngles()
@@ -263,6 +274,18 @@ class Action:
         if len(self.modePoller.poll(0)) is not 0:
             return self.modeChannel.recv_json()
         else: return oldMode
+    
+    def getBeat2(self):
+        if len(self.beatPoller.poll(0)) is not 0:
+            beatdata = self.beatChannel.recv_json()
+            return beatdata['num']
+        else:
+            return self.beat
+            
+    def getBeat(self):
+        beatdata = self.beatChannel.recv_json()
+        return beatdata['num']
+    
         
     def getBPM(self, oldBPM):
         """ Get the current Ableton BPM """
@@ -304,12 +327,12 @@ class Action:
         if self.mode is "A":
             self.minV = 0.01
             self.maxV = 2.00
-            self.a = 0.015
+            self.a = 0.03
             self.vMax = [self.maxV, self.maxV, self.maxV]
         elif self.mode is "B":
             self.minV = 0.05
             self.maxV = 4.00
-            self.a = 0.025
+            self.a = 0.05
             self.vMax = [self.maxV, self.maxV, self.maxV]
             
     def pedalResponse(self, direction):
@@ -317,9 +340,9 @@ class Action:
         Responds to adjustment of beat up or down
         """
         if direction == "up":
-            self.beatMod['mod'] = 0.4
+            self.beatMod['mod'] = 0.5
         elif direction == "down":
-            self.beatMod['mod'] = 0.2
+            self.beatMod['mod'] = 0.3
             
         self.pedalResponseTime = self.millis()
         self.pedalResponseDone = False
@@ -330,7 +353,7 @@ class Action:
         """
         if not self.pedalResponseDone and (self.millis() - self.pedalResponseTime) > MAX_PED_RESP_TIME:
             self.BPM = self.getBPM(self.BPM)
-            self.beatMod['mod'] = 0.3
+            self.beatMod['mod'] = 1.0
             self.pedalResponseDone = True
     
     def calcBeatMod(self):
@@ -345,6 +368,13 @@ class Action:
             return
         elif self.beatMod['dir'] == 0:
             self.beatMod['dir'] = 1
+        
+        #currBeat = self.getBeat()
+        #if currBeat!=self.beat and (currBeat - self.beat) % 2.0 == 0:
+        #    self.beatMod['dir'] *= -1
+        #    self.beat = currBeat
+        #return
+        
         self.beatInterval = 60000.0 / self.BPM
         if self.millis() - self.lastIntervalSwitch > self.beatInterval:
             self.beatMod['dir'] *= -1
@@ -389,10 +419,9 @@ class Action:
                 else:
                     pos[i] = tar_pose[i]
                     self.braking[i] = False
-            
             r = aI.moveTo([pos[0], pos[1] + (self.beatMod['mod'] * self.beatMod['dir']), pos[2] - (self.beatMod['mod'] * self.beatMod['dir'])])
             
-            #if printing: print "Action: move: sent:",pos
+            #if printing: print "Action: move: sent:",[pos[0], pos[1] + (self.beatMod['mod'] * self.beatMod['dir']), pos[2] - (self.beatMod['mod'] * self.beatMod['dir'])]
             #if printing: print "Action: move: response:",r.strip('\r\n'), "\n"
         else:
             print "Action: move: Done moving."
@@ -403,7 +432,7 @@ class Action:
         Function to check whether the maximum amount of loops has been reached. Also delays execution of the loops if TEST_MODE_SLOW is active. 
         """
         
-        #if TEST_MODE_SLOW: time.sleep(0.01)
+        if TEST_MODE_SLOW: time.sleep(0.01)
         
         if self.loops_executed >= self.max_loops:
             self.loops_executed = 0

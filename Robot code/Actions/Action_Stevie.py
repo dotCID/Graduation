@@ -18,6 +18,9 @@ from poses import drifting_pos_C
 from poses import drifting_pos_L
 from poses import drifting_pos_R
 
+from poses import pos_min
+from poses import pos_max
+
 class SpecificAction(Action):
     
     # Random additional angle for movement
@@ -26,7 +29,7 @@ class SpecificAction(Action):
     def R_extra(self):
         return random.uniform(-1*self.R_extra_max, self.R_extra_max)
 
-    def execute(self,loops = 50):
+    def execute(self,loops = 150):
         """
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
@@ -55,7 +58,12 @@ class SpecificAction(Action):
             
             for i in range(len(self.pos_target)):
                 self.pos_target[i] += self.R_extra()
+                if self.pos_target[i] > pos_max[i]:
+                    self.pos_target[i] = pos_max[i]
+                if self.pos_target[i] < pos_min[i]:
+                    self.pos_target[i] = pos_min[i]
         
+            print self.pos_target
         self.move(self.pos_target)
         
         return EXIT_CODE_SELF

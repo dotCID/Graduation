@@ -16,7 +16,7 @@ pos_dead       = (170.0,   5.0, 160.0)
 contact_joint_positions = [ 94.0 , 50.0, 135.0 ]
 
 ## Action 2: Scan
-scan_pos_L = [  0.0,  65.0, 105.0]
+scan_pos_L = [  0.0,  65.0, 140.0]
 scan_pos_R = [180.0,  50.0, 125.0]
 
 ## Action 3: Acknowledge - switch between two poses of looking at user and one of looking at laptop

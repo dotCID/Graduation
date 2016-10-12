@@ -10,7 +10,6 @@ from globalVars import EXIT_CODE_DONE
 from globalVars import EXIT_CODE_ERROR
 from globalVars import EXIT_CODE_ACK
 
-from globalVars import CHANNEL_BEAT
 
 EXIT_CODE_SELF = EXIT_CODE_ACK
 
@@ -21,17 +20,6 @@ from poses import ack_pos_R
 
 
 class SpecificAction(Action):
-    # Beat channel
-    context = zmq.Context()
-    beatChannel = context.socket(zmq.SUB)
-    beatChannel.setsockopt(zmq.CONFLATE,1 )
-    beatChannel.setsockopt(zmq.SUBSCRIBE, '')
-    beatChannel.connect(CHANNEL_BEAT)
-    beatPoller = zmq.Poller()
-    beatPoller.register(beatChannel, zmq.POLLIN)
-    
-    def getBeat(self):
-        return self.beatChannel.recv_json()
 
     def execute(self,loops = 450):
         """

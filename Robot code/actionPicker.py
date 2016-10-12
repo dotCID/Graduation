@@ -168,9 +168,9 @@ def randomSelectB():
 def randomSelectC():
     """
     Selects an action from set C (high energy).
-    @return: the return code {2 or 3} of the next action
+    @return: the return code {2 or 3 or 4} of the next action
     """
-    chances = (0.0, 0.3, 0.2, 0.5, 0.0)
+    chances = (0.0, 0.3, 0.4, 0.3, 0.0)
     modes   = ("0", "A", "A", "A", "0")
     
     return randomSelect(chances, modes)
@@ -299,6 +299,6 @@ while True:
         if exit_code == EXIT_CODE_ACK:
             exit_code = actions[exit_code].execute(900)
         else:
-            exit_code = actions[exit_code].execute(250)
+            exit_code = actions[exit_code].execute(450)
 
         continue

@@ -63,14 +63,7 @@ class SpecificAction(Action):
     bpmChannel.connect(CHANNEL_BPM)
     bpmPoller = zmq.Poller()
     bpmPoller.register(bpmChannel, zmq.POLLIN)
-    
-    # Beat channel
-    beatChannel = context.socket(zmq.SUB)
-    beatChannel.setsockopt(zmq.CONFLATE,1 )
-    beatChannel.setsockopt(zmq.SUBSCRIBE, '')
-    beatChannel.connect(CHANNEL_BEAT)
-    beatPoller = zmq.Poller()
-    beatPoller.register(beatChannel, zmq.POLLIN)
+   
    
     # Variables
     targetData_default = {
@@ -117,8 +110,6 @@ class SpecificAction(Action):
     def getAccelData(self):
         return self.accelDataChannel.recv_json()
         
-    def getBeat(self):
-        return self.beatChannel.recv_json()
             
     def setBPM(self, newBPM):
         """ Sets the BPM in Ableton """
@@ -175,7 +166,7 @@ class SpecificAction(Action):
             
             # but only from the start of a measure, assuming 4/4 timing
             if self.startBeat is None:
-                self.startBeat = self.getBeat()["num"]
+                self.startBeat = self.getBeat()
             
             if self.startBeat%4!=0 and self.energy_calc_start is None:
                 print "Waiting for measure to start",self.startBeat
@@ -185,7 +176,7 @@ class SpecificAction(Action):
                 if self.energy_calc_start is None:
                     self.energy_calc_start = self.millis()
                 
-                beat = self.getBeat()["num"]
+                beat = self.getBeat()
                 
                 # Append energy when the required amount of beats has not been reached yet
                 if (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES:
@@ -212,25 +203,33 @@ class SpecificAction(Action):
                         else:
                             print "BPM stays unchanged", self.BPMAdjustment
                             aI.bpmSame()
+                            
+                            # clear old values
+                            self.adjustmentConfirmed = False
+                            self.countDownAnimStarted = False
+                            self.energyVals = []
+                            self.energy_calc_start = None
+                            self.averageEnergy = None
+                            self.startBeat = None
+                            return EXIT_CODE_ACK
                         self.adjustmentConfirmed = True
                         
                 # Count down
-                else:
+                elif not self.countDownAnimStarted:
                     self.currBPM = self.getBPM(self.currBPM)
+                
+                    # BPM countdown animation           
+                    LEDDelay = 60000.0 / self.currBPM
                     
-                    if not self.countDownAnimStarted:
-                        # BPM countdown animation           
-                        LEDDelay = 60000.0 / self.currBPM
-                        
 
-                        if self.BPMAdjustment > 0:                        
-                            print "Starting countup animation", LEDDelay, beat
-                            aI.bpmCountUp(LEDDelay)
-                        elif self.BPMAdjustment < 0:
-                            print "Starting countdown animation", LEDDelay, beat
-                            aI.bpmCountDown(LEDDelay)
-                            
-                        self.countDownAnimStarted = True
+                    if self.BPMAdjustment > 0:                        
+                        print "Starting countup animation", LEDDelay, beat
+                        aI.bpmCountUp(LEDDelay)
+                    elif self.BPMAdjustment < 0:
+                        print "Starting countdown animation", LEDDelay, beat
+                        aI.bpmCountDown(LEDDelay)
+                        
+                    self.countDownAnimStarted = True
                 # Adjust BPM
                 if (beat / 4.0) - (self.startBeat / 4.0) >= ENERGY_CALC_MEASURES + BPM_SHIFT_WAIT_MEASURES + BPM_SHIFT_CNTDWN_MEASURES:
                     print "Applying adjustment.", beat
@@ -246,4 +245,4 @@ class SpecificAction(Action):
                     
                     return EXIT_CODE_ACK
             
-            return EXIT_CODE_SELF
+        return EXIT_CODE_SELF
