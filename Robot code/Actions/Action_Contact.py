@@ -131,6 +131,8 @@ class SpecificAction(Action):
         if printing: print "Set BPM to",newBPM
         self.currBPM = newBPM
         Action.BPM = self.currBPM # change the head bob bpm as well
+        
+        aI.setBPM(newBPM)         # Change the lighting BPM too
             
     def calcAdjustBPM(self):
         """ Calculate the BPM adjustment """
