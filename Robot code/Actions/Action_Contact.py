@@ -156,10 +156,11 @@ class SpecificAction(Action):
         
         if not self.done(self.currentPosition(), contact_joint_positions):
             if printing: print "Action_Contact: Moving to look at pedal user"
-            self.move(contact_joint_positions)
+            self.moveQuick(contact_joint_positions)
             return EXIT_CODE_SELF
         
         if self.averageEnergy is None:
+            if printing: print "Getting energy average"
             self.averageEnergy = self.getEnergyAvg()
         else:
             # calculate BPM over given interval
@@ -203,15 +204,6 @@ class SpecificAction(Action):
                         else:
                             print "BPM stays unchanged", self.BPMAdjustment
                             aI.bpmSame()
-                            
-                            # clear old values
-                            self.adjustmentConfirmed = False
-                            self.countDownAnimStarted = False
-                            self.energyVals = []
-                            self.energy_calc_start = None
-                            self.averageEnergy = None
-                            self.startBeat = None
-                            return EXIT_CODE_ACK
                         self.adjustmentConfirmed = True
                         
                 # Count down
@@ -242,6 +234,7 @@ class SpecificAction(Action):
                     self.energy_calc_start = None
                     self.averageEnergy = None
                     self.startBeat = None
+                    aI.ready()  #resets pixel pattern
                     
                     return EXIT_CODE_ACK
             

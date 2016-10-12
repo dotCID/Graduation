@@ -133,7 +133,7 @@ void readSerial(){
   }
   
   if(stringComplete) {
-      if(inputString.startsWith("stop")){
+    if(inputString.startsWith("stop")){
           Serial.println(F("Stopping."));
           fullStop = true;
     

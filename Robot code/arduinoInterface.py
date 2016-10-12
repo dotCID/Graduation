@@ -54,17 +54,19 @@ def moveTo(joint_angles):
         # The servos are powered by a PWM signal that gives about a 0.5 degree resolution.
         # To smooth out movement, we round that out here.
         angle = joint_angles[i]
+        currAngles[i] = angle
         if i==1:
             angle = round(joint_angles[i]*4.0)/4.0
         totalResponse += arduinoWrite(angle, i).strip()
         totalResponse += ", "
-        currAngles[i] = angle
+
     
     totalResponse += ">"
     return totalResponse
 
 def getAngles():
-    """    Simply return the currently set joint angles.    """    
+    """    Simply return the currently set joint angles.    """
+    global currAngles
     return currAngles
 
     

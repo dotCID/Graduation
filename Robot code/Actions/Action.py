@@ -427,6 +427,53 @@ class Action:
             print "Action: move: Done moving."
             return EXIT_CODE_DONE
     
+    def moveQuick(self, end_pose):
+        """
+        Function to change the intended joint positions.
+        @param list end_pose: the list of desired end poses
+        """
+        
+        pos = aI.getAngles() ## This is the new method of getting current joint data
+        
+        """
+        # modify the end pose with the beat
+        # 1 and 3 are opposed, hence + & -
+        tar_pose = [end_pose[0], end_pose[1] + (self.beatMod['mod'] * self.beatMod['dir']), \
+                                 end_pose[2] - (self.beatMod['mod'] * self.beatMod['dir'])]
+        """
+        tar_pose = end_pose
+        self.minV = 0.1
+        self.a = 0.09
+        self.maxV = 4.00
+        if not self.done_list(pos, tar_pose):
+            self.determineVmax(pos, tar_pose)
+            
+            for i in range(len(pos)):
+                if abs(pos[i] - tar_pose[i]) > self.minV *5:
+                    #there are some odd issues with the braking triggers not resetting properly
+                    if abs(pos[i] - tar_pose[i]) > self.minV * 10:
+                        self.braking[i] = False
+                    
+                    v = self.determineSpeed(pos, tar_pose, i)
+                    
+                    if pos[i] < tar_pose[i] and pos[i]+v < pos_max[i]: # Should fix the "looking up infinitely" bug
+                        pos[i]+=v
+                    elif pos[i] > tar_pose[i] and pos[i]-v > pos_min[i]:
+                        pos[i]-=v
+                else:
+                    pos[i] = tar_pose[i]
+                    self.braking[i] = False
+            r = aI.moveTo([pos[0], pos[1], pos[2]])
+            
+            #if printing: print "Action: move: sent:",[pos[0], pos[1] + (self.beatMod['mod'] * self.beatMod['dir']), pos[2] - (self.beatMod['mod'] * self.beatMod['dir'])]
+            #if printing: print "Action: move: response:",r.strip('\r\n'), "\n"
+        else:
+            print "Action: move: Done moving quickly."
+            self.minV = 0.01
+            self.maxV = 2.00
+            self.a = 0.03
+            return EXIT_CODE_DONE
+    
     def loopCheck(self):
         """ 
         Function to check whether the maximum amount of loops has been reached. Also delays execution of the loops if TEST_MODE_SLOW is active. 
