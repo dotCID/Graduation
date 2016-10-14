@@ -17,7 +17,7 @@ CHANNEL_IMU_RAWPOS  = "tcp://127.0.0.1:4009"
 CHANNEL_PEDAL       = "tcp://127.0.0.1:4010" # Current state of the foot pedal
 
 ## OSC Addresses
-OSC_ABLETON_IP      = "145.94.158.51"
+OSC_ABLETON_IP      = "145.94.158.141"
 
 ## Arduinos 
 BOT_ARDUINO_ADDRESS = '/dev/ttyUSB1'

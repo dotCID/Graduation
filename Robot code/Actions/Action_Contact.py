@@ -79,7 +79,7 @@ class SpecificAction(Action):
     localAvgEnergy = 0.0
     startBeat = None
     energy_calc_start = None
-    energyVals = []
+    energyVals = [0]
     accelData = {
                    't'           : 0,
                    'a_avg_short' : 0.0,
@@ -127,6 +127,7 @@ class SpecificAction(Action):
             
     def calcAdjustBPM(self):
         """ Calculate the BPM adjustment """
+        """
         ediff = self.averageEnergy - self.localAvgEnergy
         print "Average long energy: ",self.averageEnergy, " Short term:",self.localAvgEnergy
         print "ediff was", ediff
@@ -141,6 +142,13 @@ class SpecificAction(Action):
 
         print "Difference was too small."
         return 0
+        """
+        if self.energyVals[0] is 0:
+            self.energyVals[0] = 1
+            return -5
+        if self.energyVals[0] is 1:
+            self.energyVals[0] = 0
+            return 5
         
                 
             
@@ -160,8 +168,8 @@ class SpecificAction(Action):
             return EXIT_CODE_SELF
         
         if self.averageEnergy is None:
-            if printing: print "Getting energy average"
-            self.averageEnergy = self.getEnergyAvg()
+            #if printing: print "Getting energy average"
+            self.averageEnergy = 1
         else:
             # calculate BPM over given interval
             
@@ -183,13 +191,13 @@ class SpecificAction(Action):
                 if (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES:
                     # Turn on the LEDs constantly to indicate listening
                     aI.pixOn()
-                    self.energyVals.append(self.getAccelData()['a_avg_short'])
-                    print "calculating energy (",self.millis() - self.energy_calc_start, ")", beat
+                    #self.energyVals.append(self.getAccelData()['a_avg_short'])
+                    #print "calculating energy (",self.millis() - self.energy_calc_start, ")", beat
                 
                 # Then confirm
                 elif (beat / 4.0) - (self.startBeat / 4.0) <= ENERGY_CALC_MEASURES + BPM_SHIFT_WAIT_MEASURES:
                     if not self.adjustmentConfirmed:
-                        self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
+                        #self.localAvgEnergy = sum(self.energyVals)/len(self.energyVals)
                         self.BPMAdjustment = self.calcAdjustBPM()
                         
                         # BPM up/down animation  
@@ -230,7 +238,7 @@ class SpecificAction(Action):
                     # clear old values
                     self.adjustmentConfirmed = False
                     self.countDownAnimStarted = False
-                    self.energyVals = []
+                    #self.energyVals = []
                     self.energy_calc_start = None
                     self.averageEnergy = None
                     self.startBeat = None

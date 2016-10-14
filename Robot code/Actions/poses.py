@@ -10,10 +10,10 @@ pos_min        = (  0.0,   5.0,  20.0)
 pos_max        = (180.0, 180.0, 180.0)
 
 ## For playing dead
-pos_dead       = (170.0,   5.0, 160.0)
+pos_dead       = ( 67.0,  50.0, 120.0)
 
 ## Action 1: Contact
-contact_joint_positions = [ 94.0 , 50.0, 135.0 ]
+contact_joint_positions = [ 180.0 , 70.0, 135.0 ]
 
 ## Action 2: Scan
 scan_pos_L = [  0.0,  65.0, 140.0]
