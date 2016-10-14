@@ -102,6 +102,8 @@ void setup(void)
         while (!bno.isFullyCalibrated())
         {
             bno.getEvent(&event);
+            displayCalStatus();
+            Serial.println("");
             delay(BNO055_SAMPLERATE_DELAY_MS);
         }
     }
