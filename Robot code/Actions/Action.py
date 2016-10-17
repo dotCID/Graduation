@@ -53,7 +53,7 @@ class Action:
                             'y' : 5.0,
                             'z' : -180.0
                           }
-
+    
     def __init__(self):
         # Output control
         self.printing = False
@@ -72,13 +72,13 @@ class Action:
         
         # Modifiers for beat response
         self.beatMod = {
-                        'mod'   : 0.5,  # degrees of modification +/-
+                        'mod'   : 0.2,  # degrees of modification +/-
                         'dir'   : 0    # direction of modification. can be -1 | 0 | 1
                        }
-        self.BPM = 100.0
+        self.BPM = 60.0
         self.beatInterval = 60000.0 / self.BPM
         self.beat = 1
-        self.energyLevel = "high"
+        self.energyLevel = "none"
         self.lastIntervalSwitch = 0
         
         # In response to adjusting beat:
@@ -196,7 +196,6 @@ class Action:
         
         _a = self.a
         
-        #if searching: _a = a_search  #TODO: this is a possible improvement for certain actions -> override with a_search >> a
         
         if self.distanceRemaining(pos[i], goal[i]) < self.stoppingDistance(self.vCurr[i]):
             self.braking[i] = True
@@ -327,12 +326,12 @@ class Action:
         if self.mode is "A":
             self.minV = 0.01
             self.maxV = 2.00
-            self.a = 0.03
+            self.a = 0.015
             self.vMax = [self.maxV, self.maxV, self.maxV]
         elif self.mode is "B":
             self.minV = 0.05
             self.maxV = 4.00
-            self.a = 0.05
+            self.a = 0.025
             self.vMax = [self.maxV, self.maxV, self.maxV]
             
     def pedalResponse(self, direction):
@@ -369,6 +368,7 @@ class Action:
         elif self.beatMod['dir'] == 0:
             self.beatMod['dir'] = 1
         
+        
         #currBeat = self.getBeat()
         #if currBeat!=self.beat and (currBeat - self.beat) % 2.0 == 0:
         #    self.beatMod['dir'] *= -1
@@ -379,6 +379,7 @@ class Action:
         if self.millis() - self.lastIntervalSwitch > self.beatInterval:
             self.beatMod['dir'] *= -1
             self.lastIntervalSwitch = self.millis()
+            print "switching directions", self.beatMod['dir']
         
     
     def move(self, end_pose):
@@ -473,6 +474,18 @@ class Action:
             self.maxV = 2.00
             self.a = 0.03
             return EXIT_CODE_DONE
+    
+    def moveDirect(self, end_pose):
+        """
+        Function to move directly without interpolation and speed compensation. For testing and/or adjustments based on vision.
+        """
+        
+        self.calcBeatMod()
+        pos = aI.getAngles()
+        
+        if not self.done_list(pos, end_pose):
+            aI.moveTo([end_pose[0], end_pose[1] + (self.beatMod['mod'] * self.beatMod['dir']), end_pose[2] - (self.beatMod['mod'] * self.beatMod['dir'] * -1)])
+        else: return EXIT_CODE_DONE
     
     def loopCheck(self):
         """ 

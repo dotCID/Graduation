@@ -102,7 +102,9 @@ class SpecificAction(Action):
             return self.targetChannel.recv_json()
         else:
             return self.targetData
-    
+        
+        #return self.targetChannel.recv_json()
+        
     def getEnergyAvg(self):
         """ Simple function for shorter syntax """
         return self.accelDataChannel.recv_json()['a_avg_long']
@@ -154,10 +156,38 @@ class SpecificAction(Action):
         #if self.loopCheck() == EXIT_CODE_DONE:
         #    return EXIT_CODE_DONE
         
-        if not self.done(self.currentPosition(), contact_joint_positions):
+        # Reimplementation of visual search
+        self.targetData = self.getTargetData()
+        if self.targetData['found']:
+            
+            self.energyLevel = "low"
+            self.beatMod['mod'] = 0.2
+            
+            #if printing: print "Action_Contact: Found target. Following."
+            deg_x = -self.targetData['tar_dg']['x'] 
+            deg_y = -self.targetData['tar_dg']['y']
+            findTime = self.targetData['findTime']
+            
+            #print "Action_Contact: adjustment: ", deg_x, deg_y
+            
+            pos = self.currentPosition()
+            newpos = (pos[0] + deg_x/10.0, pos[1], pos[2] - deg_y/8.0) ## /10 because otherwise he moves way too fast; this script is much quicker than SimpleCV
+            #print pos, newpos
+            
+            self.a = 0.0025
+            self.moveDirect(newpos) # no interpolation
+            return EXIT_CODE_SELF
+            """elif not self.done(self.currentPosition(), contact_joint_positions):
             if printing: print "Action_Contact: Moving to look at pedal user"
             self.moveQuick(contact_joint_positions)
             return EXIT_CODE_SELF
+            """
+        else:
+            if printing: print "Action_Contact: Target lost, scanning"
+            
+            self.energyLevel = "none"
+            return EXIT_CODE_SCAN
+        
         
         if self.averageEnergy is None:
             if printing: print "Getting energy average"

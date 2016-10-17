@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/user/bin/python
 '''
 This script uses SimpleCV to grab an image from the camera and numpy to find an infrared LED and report its position relative to the camera view centre and whether it is inside the target area.
 
@@ -16,22 +16,20 @@ sys.stdout.write("\x1b]2;Sensors/simpleCV_3.py\x07")
 import time, math, SimpleCV
 import zmq, json
 import subprocess as sp
-import arduinoInterface as aI
-
 from globalVars import CHANNEL_TARGETDATA
 from globalVars import CAMERA_ID_NUMBER
 
 printing = True
 
 #dpx = 0.0025 # approximate amount of degrees per pixel for Trust eLight
-dpx = 0.0025
+dpx = 0.025
 
 width = 1920
 height = 1080
 camera_id = 'video' + str(CAMERA_ID_NUMBER)
 
 # To increase detection framerate, count the search() loops and render every n frames
-renderFrame = 5
+renderFrame = 30
 frame = 0
 
 # Adjust camera settings from OS, since SimpleCV's commands don't do anything:
@@ -44,7 +42,7 @@ cam = SimpleCV.Camera(CAMERA_ID_NUMBER, {"width":width,"height":height})
 #target box for the marker
 box_d = 60
 yTgt = (height/2-box_d, height/2+box_d)
-xTgt = (width/2-box_d*2, width/2+box_d*2)   # Rectangular box to compensate for the BH motor inaccuracy
+xTgt = (width/2-box_d, width/2+box_d)
 box_clr = SimpleCV.Color.RED
 
 centre = (height/2, width/2)
@@ -131,7 +129,7 @@ while display.isNotDone():
         lastFound = findTime
     # Angular difference between the box and the target
     # Having the target within the box is acceptable
-    if abs(tar_x) > box_d*2:
+    if abs(tar_x) > box_d:
         deg_x = tar_x * dpx
     else:
         deg_x = 0

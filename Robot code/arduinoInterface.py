@@ -55,18 +55,26 @@ def moveTo(joint_angles):
         # To smooth out movement, we round that out here.
         angle = joint_angles[i]
         currAngles[i] = angle
+        
         if i==1:
             angle = round(joint_angles[i]*4.0)/4.0
         totalResponse += arduinoWrite(angle, i).strip()
         totalResponse += ", "
 
     
+    with open('currAngles.txt', 'w') as file_:
+        file_.write(str(currAngles))
+    
     totalResponse += ">"
     return totalResponse
 
-def getAngles():
+def getAngles(from_='.'):
     """    Simply return the currently set joint angles.    """
     global currAngles
+    with open(from_+'/currAngles.txt', 'r') as file_:
+        text = file_.read()
+        currAnglesTXT = eval(text)
+        return currAnglesTXT
     return currAngles
 
     

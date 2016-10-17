@@ -5,6 +5,7 @@ An action where the robot scans its surroundings for eye contact.
 
 import random, time
 from Action import Action
+import arduinoInterface as aI
 
 ## Exit codes
 from globalVars import EXIT_CODE_DONE
@@ -88,18 +89,20 @@ class SpecificAction(Action):
         Main executing method of this Action.
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
-        global targetData, contact_joint_positions
+        global  contact_joint_positions
         # the general max speed is a bit high here
-        self.maxV = 1.00
+        self.maxV = 0.50
+        self.a = 0.0025
         
         global scan_pos_L, scan_pos_R
         
         self.max_loops = loops
         if self.loopCheck() == EXIT_CODE_DONE:
+            self.a = 0.05
             return EXIT_CODE_DONE
             
-        targetData = self.getTargetData()
-        if targetData['found']:
+        self.targetData = self.getTargetData()
+        if self.targetData['found']:
             print "Action_Scan: Found target"
             contact_joint_positions = self.currentPosition()
             movementData = self.getMovementData()
@@ -109,11 +112,11 @@ class SpecificAction(Action):
         elif self.done(self.currentPosition(), self.pos_target):
             if not self.tried_last_loc:
                 print "trying last location"
-                print targetData['tar_px']
-                if targetData['tar_px']['x'] > 0:
+                print self.targetData['tar_px']
+                if self.targetData['tar_px']['x'] > 0:
                     self.pos_target = scan_pos_R
                     print "Target was to my right"
-                elif targetData['tar_px']['x']<0:
+                elif self.targetData['tar_px']['x']<0:
                     self.pos_target = scan_pos_L
                     print "Target was to my left"
                 self.tried_last_loc = True

@@ -190,7 +190,7 @@ def getPedalState():
 #                   RUNNING CODE BELOW                      #
 #############################################################
 
-exit_code = -2 # start without movement
+exit_code = 2 # start without movement
 waiting = False
 dead = False
 
@@ -235,7 +235,7 @@ while True:
     user_contact_angles = actions[0].getUserContactAngles()
     
     ## Check whether the user might contact the bot and whether we're not already making contact
-    if ((user_contact_angles['x'] <= orientationData['x'] + MARGIN_USER_CONTACT )  and \
+    """if ((user_contact_angles['x'] <= orientationData['x'] + MARGIN_USER_CONTACT )  and \
         (user_contact_angles['x'] >= orientationData['x'] - MARGIN_USER_CONTACT )) and \
        ((user_contact_angles['y'] <= orientationData['y'] + MARGIN_USER_CONTACT )  and \
         (user_contact_angles['y'] >= orientationData['y'] - MARGIN_USER_CONTACT )) and \
@@ -245,6 +245,7 @@ while True:
         if printing: print "Possible attention!", exit_code
         exit_code = actions[2].execute()
         continue
+    """
         
     ## Support for foot pedal:
     pedalState = getPedalState()
@@ -262,8 +263,9 @@ while True:
         if len(targetPoller.poll(0)) is not 0:
             targetData = targetChannel.recv_json()
         if targetData['found']:
+            if printing: print "I see someone!"
+            actions[1].pos_target = actions[1].currentPosition() # move to the position where someone was spotted
             exit_code = actions[1].execute()
-            if printing: print "Someone sees me!"
             continue
 
     ## Is our last action completed?

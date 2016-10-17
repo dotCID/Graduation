@@ -1,0 +1,2 @@
+* beatMod only moves down when targeting the LED
+* No BPM adjust at the moment is active
