@@ -62,8 +62,8 @@ def moveTo(joint_angles):
         totalResponse += ", "
 
     
-    with open('currAngles.txt', 'w') as file_:
-        file_.write(str(currAngles))
+    #with open('currAngles.txt', 'w') as file_:
+     #   file_.write(str(currAngles))
     
     totalResponse += ">"
     return totalResponse
@@ -71,10 +71,10 @@ def moveTo(joint_angles):
 def getAngles(from_='.'):
     """    Simply return the currently set joint angles.    """
     global currAngles
-    with open(from_+'/currAngles.txt', 'r') as file_:
-        text = file_.read()
-        currAnglesTXT = eval(text)
-        return currAnglesTXT
+    #with open(from_+'/currAngles.txt', 'r') as file_:
+    #    text = file_.read()
+    #    currAnglesTXT = eval(text)
+    #    return currAnglesTXT
     return currAngles
 
     
