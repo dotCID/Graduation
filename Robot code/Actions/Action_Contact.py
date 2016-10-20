@@ -161,7 +161,7 @@ class SpecificAction(Action):
         if self.targetData['found']:
             
             self.energyLevel = "low"
-            self.beatMod['mod'] = 0.2
+            self.beatMod['mod'] = 0.0
             
             #if printing: print "Action_Contact: Found target. Following."
             deg_x = -self.targetData['tar_dg']['x'] 
