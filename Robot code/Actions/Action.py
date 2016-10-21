@@ -388,7 +388,7 @@ class Action:
         @param list end_pose: the list of desired end poses
         """
         
-        # if printing: print "Action: move: end_pose = ",end_pose
+        #if printing: print "Action: move: end_pose = ",end_pose
         self.adaptToMode()
         
         pos = aI.getAngles() ## This is the new method of getting current joint data
