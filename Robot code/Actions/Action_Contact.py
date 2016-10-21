@@ -152,9 +152,9 @@ class SpecificAction(Action):
         @param loops: The amount of times the action will execute a "step" until it finishes. Defaults to 50.
         """
         # Not relevant for this Action
-        #self.max_loops = loops
-        #if self.loopCheck() == EXIT_CODE_DONE:
-        #    return EXIT_CODE_DONE
+        self.max_loops = loops
+        if self.loopCheck() == EXIT_CODE_DONE:
+            return EXIT_CODE_DONE
         
         # Reimplementation of visual search
         self.targetData = self.getTargetData()
