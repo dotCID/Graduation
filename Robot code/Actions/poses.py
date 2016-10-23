@@ -5,9 +5,9 @@ It would be best for the future to convert all poses to offsets of the default, 
 
 
 ## Defaults
-pos_default    = ( 67.0,  50.0, 120.0)
+pos_default    = ( 67.0,  50.0, 100.0)
 pos_min        = (  0.0,   5.0,  20.0)
-pos_max        = (120.0,  70.0, 100.0)
+pos_max        = (120.0,  70.0, 180.0)
 
 ## For playing dead
 pos_dead       = (170.0,   5.0, 160.0)

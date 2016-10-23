@@ -157,6 +157,7 @@ class SpecificAction(Action):
         #    return EXIT_CODE_DONE
         
         # Reimplementation of visual search
+        """
         self.targetData = self.getTargetData()
         if self.targetData['found']:
             
@@ -177,17 +178,17 @@ class SpecificAction(Action):
             self.a = 0.0025
             self.moveDirect(newpos) # no interpolation
             return EXIT_CODE_SELF
-            """elif not self.done(self.currentPosition(), contact_joint_positions):
+            elif not self.done(self.currentPosition(), contact_joint_positions):
             if printing: print "Action_Contact: Moving to look at pedal user"
             self.moveQuick(contact_joint_positions)
             return EXIT_CODE_SELF
-            """
+            
         else:
             if printing: print "Action_Contact: Target lost, scanning"
             
             self.energyLevel = "none"
             return EXIT_CODE_SCAN
-        
+        """
         
         if self.averageEnergy is None:
             if printing: print "Getting energy average"
